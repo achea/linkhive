@@ -1,0 +1,27 @@
+body {
+	background-color: white;
+	font-size: 62.5%;
+}
+
+div#wrapper {
+	border: 1px solid black;
+	font-size: 1.4em;
+}
+
+div.main {
+	padding: 1em;
+}
+
+a.paginate {
+	border: 1px solid black;
+	text-underline: none;
+}
+
+
+
+div .news-summary {
+	border: 1px solid green;
+	margin: .5em 0 .5em;
+	padding: .5em;
+}
+
