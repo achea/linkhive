@@ -216,12 +216,12 @@
 			// <digg date="1207098435" story="5939299" id="133463245" user="Gambit89" status="popular" />
 			$query= "CREATE TABLE IF NOT EXISTS " . $mysqlDiggsTable .
 "(
-	date     CHAR(11) CHARACTER SET utf8,
-	story CHAR(20) CHARACTER SET utf8,
-	id	CHAR(20) CHARACTER SET utf8,
+	date     INT(11) UNSIGNED NOT NULL,
+	story INT(20) UNSIGNED NOT NULL,
+	id	INT(20) UNSIGNED NOT NULL,
 	user	CHAR(20) CHARACTER SET utf8,
 	status	CHAR(10) CHARACTER SET utf8,
-	PRIMARY KEY (story)
+	PRIMARY KEY (id)
 )";
 			$status = mysql_query($query);
 			$message = ( $status? "Success!\n" : "Table not created\n" );
@@ -240,35 +240,35 @@
   <thumbnail originalwidth="390" originalheight="387" contentType="image/jpeg" src="http://digg.com/linux_unix/Jukebox_con_Linux/t.jpg" width="80" height="80" />
  </story> */
 
-			//url has length of 255, title has length of 60 chars, description has length of 350 chars.
+			//url has length of 255, title has length of 66 chars, description has length of 350 chars.
 			$query= "CREATE TABLE IF NOT EXISTS " . $mysqlStoryTable .
 "(
-	id		VARCHAR(20) CHARACTER SET utf8,
+	id		INT(20) UNSIGNED NOT NULL,
 	link		VARCHAR(257) CHARACTER SET utf8,
-	submit_date     VARCHAR(20) CHARACTER SET utf8,
-	diggs		VARCHAR(20) CHARACTER SET utf8,
-	comments	VARCHAR(11) CHARACTER SET utf8,
-	promote_date	VARCHAR(20) CHARACTER SET utf8,
+	submit_date     INT(20) UNSIGNED NOT NULL,
+	diggs		INT(11) UNSIGNED NOT NULL,
+	comments	INT(11) UNSIGNED NOT NULL,
+	promote_date	INT(20) UNSIGNED NOT NULL,
 	status		VARCHAR(10) CHARACTER SET utf8,
 	media		VARCHAR(20) CHARACTER SET utf8,
 	href		VARCHAR(130) CHARACTER SET utf8,
 
-	title		VARCHAR(62) CHARACTER SET utf8,
+	title		VARCHAR(66) CHARACTER SET utf8,
 	description	VARCHAR(352) CHARACTER SET utf8,
 	user_name	VARCHAR(20) CHARACTER SET utf8,
 	user_icon	VARCHAR(60) CHARACTER SET utf8,
-	user_registered	VARCHAR(20) CHARACTER SET utf8,
-	user_profileviews	VARCHAR(11) CHARACTER SET utf8,
+	user_registered	INT(20) UNSIGNED NOT NULL,
+	user_profileviews	INT(11) UNSIGNED NOT NULL,
 	topic_name	VARCHAR(30) CHARACTER SET utf8,
 	topic_short_name	VARCHAR(20) CHARACTER SET utf8,
 	container_name	VARCHAR(30) CHARACTER SET utf8,
 	container_short_name	VARCHAR(20) CHARACTER SET utf8,
-	thumbnail_originalwidth	VARCHAR(10) CHARACTER SET utf8,
-	thumbnail_originalheight	VARCHAR(10) CHARACTER SET utf8,
+	thumbnail_originalwidth	INT(10) UNSIGNED NOT NULL,
+	thumbnail_originalheight	INT(10) UNSIGNED NOT NULL,
 	thumbnail_contentType	VARCHAR(20) CHARACTER SET utf8,
 	thumbnail_src	VARCHAR(60) CHARACTER SET utf8,
-	thumbnail_width	VARCHAR(10) CHARACTER SET utf8,
-	thumbnail_height	VARCHAR(10) CHARACTER SET utf8,
+	thumbnail_width	INT(10) UNSIGNED NOT NULL,
+	thumbnail_height	INT(10) UNSIGNED NOT NULL,
 	PRIMARY KEY (id)
 )";
 			$status = mysql_query($query);
@@ -276,15 +276,17 @@
 			print $message;
 			break;
 		case "create-story-diggs-table":
+			// plan to use for friend-finding
+			//    once the computer can look up stories that I mark important
 			print "Creating table for diggs of stories... ";
 			$query= "CREATE TABLE IF NOT EXISTS " . $mysqlStoryDiggsTable .
 "(
-	date     CHAR(11) CHARACTER SET utf8,
-	story CHAR(20) CHARACTER SET utf8,
-	id	CHAR(20) CHARACTER SET utf8,
+	date     INT(11) UNSIGNED NOT NULL,
+	story INT(20) UNSIGNED NOT NULL,
+	id	INT(20) UNSIGNED NOT NULL,
 	user	CHAR(20) CHARACTER SET utf8,
 	status	CHAR(10) CHARACTER SET utf8,
-	PRIMARY KEY (story)
+	PRIMARY KEY (id)
 )";
 			$status = mysql_query($query);
 			$message = ( $status? "Success!\n" : "Table not created\n" );
