@@ -21,7 +21,7 @@
 	$mysqlStoryDiggsTable = "story_diggs";
 
 	require_once 'Services/Digg.php';
-	ini_set('user_agent', 'dstory/0.1');
+	ini_set('user_agent', 'linkhive/0.1');
 	Services_Digg::$appKey = 'http://www.achea.org/';
 
 //	echo $argc;
@@ -77,7 +77,7 @@
 						} elseif ($numRows == 0)	//not yet in database
 						{
 							//so save it
-							$query = "INSERT into " . $mysqlDiggsTable . " VALUES ('" . $digg->date . "','" . $digg->story . "','" . $digg->id . "','" . $digg->user . "','" . $digg->status . "')";
+							$query = "INSERT into " . $mysqlDiggsTable . " VALUES (" . $digg->date . "," . $digg->story . "," . $digg->id . ",'" . $digg->user . "','" . $digg->status . "')";
 							//print $query . "\n";
 							mysql_query($query);
 							$numSaved++;
@@ -175,7 +175,7 @@
 
 						//print $story->href . " | " . $story->user->name . " " .  $story->thumbnail->src . "\n";
 
-						$query = "INSERT INTO " . $mysqlStoryTable . " VALUES ('" . $story->id . "','" . $story->link . "','" . $story->submit_date . "','" . $story->diggs . "','" . $story->comments . "','" . $story->promote_date . "','" . $story->status . "','" . $story->media . "','" . $story->href . "','" . addslashes($story->title) . "','" . addslashes($story->description) . "','" . $story->user->name . "','" . $story->user->icon . "','" . $story->user->registered . "','" . $story->user_profileviews . "','" . $story->topic->name . "','" . $story->topic->short_name . "','" . $story->container->name . "','" . $story->container->short_name . "','" . $story->thumbnail->originalwidth . "','" . $story->thumbnail->originalheight . "','" . $story->thumbnail->contentType . "','" . $story->thumbnail->src . "','" . $story->thumbnail->width . "','" . $story->thumbnail->height . "')";
+						$query = "INSERT INTO " . $mysqlStoryTable . " VALUES (" . $story->id . ",'" . $story->link . "'," . $story->submit_date . "," . $story->diggs . "," . $story->comments . "," . $story->promote_date . ",'" . $story->status . "','" . $story->media . "','" . $story->href . "','" . addslashes($story->title) . "','" . addslashes($story->description) . "','" . $story->user->name . "','" . $story->user->icon . "'," . $story->user->registered . "," . $story->user_profileviews . ",," . $story->topic->name . "','" . $story->topic->short_name . "','" . $story->container->name . "','" . $story->container->short_name . "'," . $story->thumbnail->originalwidth . "," . $story->thumbnail->originalheight . ",'" . $story->thumbnail->contentType . "','" . $story->thumbnail->src . "'," . $story->thumbnail->width . "," . $story->thumbnail->height . ")";
 						//print $query;
 						$status = mysql_query($query);
 						if ($status)
@@ -183,7 +183,7 @@
 							$x++;			//save story counter)
 						} else {
 							//One problem was that I did not add slashes to quotes
-							print "Did not save " . $story->title . "\n";
+							print "\n--- Did not save " . $story->title . "\n";
 							//print $query . "\n";
 							//print $story->status . "\n";
 						}
