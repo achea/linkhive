@@ -13,7 +13,7 @@
 
 	$mysqlUser="achea";
 	$mysqlPassword="asdf";
-	$mysqlDatabase="digg_php";
+	$mysqlDatabase="lh_digg";
 
 	$diggUser="Gambit89";		//later do dynamic
 	$mysqlDiggsTable = "diggs_" . $diggUser;
@@ -175,7 +175,23 @@
 
 						//print $story->href . " | " . $story->user->name . " " .  $story->thumbnail->src . "\n";
 
-						$query = "INSERT INTO " . $mysqlStoryTable . " VALUES (" . $story->id . ",'" . $story->link . "'," . $story->submit_date . "," . $story->diggs . "," . $story->comments . "," . $story->promote_date . ",'" . $story->status . "','" . $story->media . "','" . $story->href . "','" . addslashes($story->title) . "','" . addslashes($story->description) . "','" . $story->user->name . "','" . $story->user->icon . "'," . $story->user->registered . "," . $story->user_profileviews . ",," . $story->topic->name . "','" . $story->topic->short_name . "','" . $story->container->name . "','" . $story->container->short_name . "'," . $story->thumbnail->originalwidth . "," . $story->thumbnail->originalheight . ",'" . $story->thumbnail->contentType . "','" . $story->thumbnail->src . "'," . $story->thumbnail->width . "," . $story->thumbnail->height . ")";
+						$query = "INSERT INTO " . $mysqlStoryTable . " VALUES (" . $story->id . ",'" . $story->link . "'," . $story->submit_date . "," . $story->diggs . "," . $story->comments . "," . (isset($story->promote_date) ? $story->promote_date : $story->submit_date) . ",'" . $story->status . "','" . $story->media . "','" . $story->href . "','" . addslashes($story->title) . "','" . addslashes($story->description) . "','" . $story->user->name . "','" . $story->user->icon;
+						   
+						//inactive user or no user 
+						if (!strcmp($story->user->name,"inactive") || !strcmp($story->user->name,''))
+						{
+							$query .= "',NULL,NULL";
+						} else {
+							$query .= "'," . $story->user->registered . "," . $story->user->profileviews; 
+						}
+						$query .= ",'" . $story->topic->name . "','" . $story->topic->short_name . "','" . $story->container->name . "','" . $story->container->short_name;
+						//missing thumbnail
+						if (isset($story->thumbnail))
+						{
+							$query .= "'," . $story->thumbnail->originalwidth . "," . $story->thumbnail->originalheight . ",'" . $story->thumbnail->contentType . "','" . $story->thumbnail->src . "'," . $story->thumbnail->width . "," . $story->thumbnail->height . ")";
+						} else {
+							$query .= "',NULL,NULL,'','',NULL,NULL)";
+						}
 						//print $query;
 						$status = mysql_query($query);
 						if ($status)
@@ -184,7 +200,8 @@
 						} else {
 							//One problem was that I did not add slashes to quotes
 							print "\n--- Did not save " . $story->title . "\n";
-							//print $query . "\n";
+							var_dump($story);
+							print $query . "\n";
 							//print $story->status . "\n";
 						}
 					}
@@ -207,6 +224,14 @@
 			break;
 		case "update-story-data":
 			break;
+		case "list-unfetched-diggs":
+			// all of the fetched diggs are in story_data
+			// unfetched are those that are in my dugg table, but not in story_data
+
+			// query all from both, zero out fetched in dugg table
+			//    non-zeroed out are those that are unfetched
+
+			break;
 		case "create-diggs-table":
 			//if exists mysql digg_php table, prompt for deletion
 			print "Creating MySQL table for dugg stories...";
@@ -214,7 +239,7 @@
 			//this is an example line from a /diggs endpoint request
 
 			// <digg date="1207098435" story="5939299" id="133463245" user="Gambit89" status="popular" />
-			$query= "CREATE TABLE IF NOT EXISTS " . $mysqlDiggsTable .
+			$query= "CREATE TABLE " . $mysqlDiggsTable .
 "(
 	date     INT(11) UNSIGNED NOT NULL,
 	story INT(20) UNSIGNED NOT NULL,
@@ -241,7 +266,8 @@
  </story> */
 
 			//url has length of 255, title has length of 66 chars, description has length of 350 chars.
-			$query= "CREATE TABLE IF NOT EXISTS " . $mysqlStoryTable .
+			// CREATE TABLE IF NOT EXISTS
+			$query= "CREATE TABLE " . $mysqlStoryTable .
 "(
 	id		INT(20) UNSIGNED NOT NULL,
 	link		VARCHAR(257) CHARACTER SET utf8,
@@ -257,18 +283,18 @@
 	description	VARCHAR(352) CHARACTER SET utf8,
 	user_name	VARCHAR(20) CHARACTER SET utf8,
 	user_icon	VARCHAR(60) CHARACTER SET utf8,
-	user_registered	INT(20) UNSIGNED NOT NULL,
-	user_profileviews	INT(11) UNSIGNED NOT NULL,
+	user_registered	INT(20) UNSIGNED,
+	user_profileviews	INT(11) UNSIGNED,
 	topic_name	VARCHAR(30) CHARACTER SET utf8,
 	topic_short_name	VARCHAR(20) CHARACTER SET utf8,
 	container_name	VARCHAR(30) CHARACTER SET utf8,
 	container_short_name	VARCHAR(20) CHARACTER SET utf8,
-	thumbnail_originalwidth	INT(10) UNSIGNED NOT NULL,
-	thumbnail_originalheight	INT(10) UNSIGNED NOT NULL,
+	thumbnail_originalwidth	INT(10) UNSIGNED,
+	thumbnail_originalheight	INT(10) UNSIGNED,
 	thumbnail_contentType	VARCHAR(20) CHARACTER SET utf8,
 	thumbnail_src	VARCHAR(60) CHARACTER SET utf8,
-	thumbnail_width	INT(10) UNSIGNED NOT NULL,
-	thumbnail_height	INT(10) UNSIGNED NOT NULL,
+	thumbnail_width	INT(10) UNSIGNED,
+	thumbnail_height	INT(10) UNSIGNED,
 	PRIMARY KEY (id)
 )";
 			$status = mysql_query($query);
@@ -279,7 +305,7 @@
 			// plan to use for friend-finding
 			//    once the computer can look up stories that I mark important
 			print "Creating table for diggs of stories... ";
-			$query= "CREATE TABLE IF NOT EXISTS " . $mysqlStoryDiggsTable .
+			$query= "CREATE TABLE " . $mysqlStoryDiggsTable .
 "(
 	date     INT(11) UNSIGNED NOT NULL,
 	story INT(20) UNSIGNED NOT NULL,
