@@ -8,6 +8,163 @@
 //users who dugg each digg story
 //comments on each digg story
 
+function get_missing_stories($userDiggs, $userDiggCount, $stories, $storyCount)
+{
+	// all of the fetched diggs are in story_data
+	// unfetched are those that are in my dugg table, but not in story_data
+
+	// query all from both, zero out fetched in dugg table
+	//    non-zeroed out are those that are unfetched
+
+	$userDiggIDs = array ();		//empty array
+	for ($i = 0; $i < $userDiggCount; $i++)
+	{
+		$row = mysql_fetch_array($userDiggs, MYSQL_NUM);
+		$userDiggIDs[$i] = $row[0];		//extract to second array
+	}
+
+	$storyIDs = array ();		//empty array
+	for ($i = 0; $i < $storyCount; $i++)
+	{
+		$row = mysql_fetch_array($stories, MYSQL_NUM);
+		$storyIDs[$i] = $row[0];		//extract to second array
+	}
+
+	$missing = array_diff($userDiggIDs,$storyIDs);		//yay, php has this function
+
+	return $missing;
+}
+
+function update_maximums($maximums, $story)
+{
+	if ($maximums['link'] < strlen($story->link))
+		$maximums['link'] = strlen($story->link);
+	if ($maximums['href'] < strlen($story->href))
+		$maximums['href'] = strlen($story->href);
+	if ($maximums['title'] < strlen($story->title))
+		$maximums['title'] = strlen($story->title);
+	if ($maximums['description'] < strlen($story->description))
+		$maximums['description'] = strlen($story->description);
+	if ($maximums['tnsrc'] < strlen($story->thumbnail->src))
+		$maximums['tnsrc'] = strlen($story->thumbnail->src);
+
+	return $maximums;
+}
+
+function fetch_stories ($storyIDs, $mysqlStoryTable)
+{
+	//the mysql_fetch_array keeps track of stories fetch so that I didn't have to make another variable to do that
+	//	now I do
+
+	//get all stories in database
+	//while still stories
+	//if (numstories < 100) fetch numstories; else fetch 100
+	//get stories and load to array
+	//get story data
+	//for each story
+	//save into database
+
+	$maximums = array( 'link' => 0 , 'href' => 0, 'title' => 0, 'description' => 0, 'tnsrc' => 0);
+	try {
+		$api = Services_Digg::factory('Stories');
+
+		/*$countStories = 0;						//storyid counter
+		while ($row = mysql_fetch_array($storyIDs, MYSQL_NUM)) {
+			$storyIDs[$countStories] = $row[0];			//save ids into array
+			$countStories++;
+		}
+
+		if ($numStories != $countStories) print "not matching counts";*/
+
+		$countStories = $numStories = count($storyIDs);
+		$savedStories = 0;
+		print "Saved ... ";
+		while ($countStories > 0)
+		{
+			sleep(2);
+			$fetchCount = ( $countStories < 100 ? $countStories : 100);	//100 max from api
+			//print $countStories;
+			//extract
+			/*$subStoryIDs = array ();		//empty array
+			for ($i = 0; $i < $fetchCount; $i++)
+			{
+				$row = mysql_fetch_array($storyIDs, MYSQL_NUM);
+				$subStoryIDs[$i] = $row[0];		//extract to second array
+			}*/
+			$subStoryIDs = array_slice($storyIDs, $numStories - $countStories, $fetchCount);
+			//print_r($subStoryIDs);
+			//print "\n" . count($subStoryIDs);
+
+			//now storyids should have enough story ids
+			//call api
+			$params = array( 'count' => 100 );
+			$stories = $api->getStoriesById($subStoryIDs, $params);
+
+			//print $stories->total . " " . $stories->count . " " . $stories->offset ;
+			if ($fetchCount != $stories->total) print "Fetch did not match total\n";
+			$x = 0;
+			foreach ($stories as $story)
+			{
+				$maximums = update_maximums($maximums, $story);
+				//save each story
+				$query = format_insert_story_query($story, $mysqlStoryTable);
+				$status = mysql_query($query);
+				if ($status)
+				{
+					$x++;			//save story counter
+				} else {
+					//One problem was that I did not add slashes to quotes in link, title, description
+					print "\n--- Did not save " . $story->title . "\n";
+					//var_dump($story);
+					print $query . "\n";
+					//print $story->status . "\n";
+				}
+			}
+
+			$savedStories += $x;
+			//print "Did not save " . (100-$x) . " stories\n";
+			print $savedStories . " ... ";
+			$countStories -= $fetchCount;		//decrement counter
+		}
+
+	} catch (PEAR_Exception $error) {
+		echo $error->getMessage() . "\n";
+	} catch (Services_Digg_Exception $error) {
+		echo $error . '\n';
+	}
+
+	var_dump($maximums);
+	
+	return $savedStories;
+}
+
+function format_insert_story_query ($story, $mysqlStoryTable)
+{
+	//var_dump($story);
+
+	//print $story->href . " | " . $story->user->name . " " .  $story->thumbnail->src . "\n";
+
+	$query = "INSERT INTO " . $mysqlStoryTable . " VALUES (" . $story->id . ",'" . addslashes($story->link) . "'," . $story->submit_date . "," . $story->diggs . "," . $story->comments . "," . (isset($story->promote_date) ? $story->promote_date : NULL) . ",'" . $story->status . "','" . $story->media . "','" . $story->href . "','" . addslashes($story->title) . "','" . addslashes($story->description) . "','" . $story->user->name . "','" . $story->user->icon;
+
+	//inactive user or no user 
+	if (!strcmp($story->user->name,"inactive") || !strcmp($story->user->name,''))
+	{
+		$query .= "',NULL,NULL";
+	} else {
+		$query .= "'," . $story->user->registered . "," . $story->user->profileviews; 
+	}
+	$query .= ",'" . $story->topic->name . "','" . $story->topic->short_name . "','" . $story->container->name . "','" . $story->container->short_name;
+	//missing thumbnail
+	if (isset($story->thumbnail))
+	{
+		$query .= "'," . $story->thumbnail->originalwidth . "," . $story->thumbnail->originalheight . ",'" . $story->thumbnail->contentType . "','" . $story->thumbnail->src . "'," . $story->thumbnail->width . "," . $story->thumbnail->height . ")";
+	} else {
+		$query .= "',NULL,NULL,'','',NULL,NULL)";
+	}
+	//print $query;
+	return $query;
+}
+
 //open mysql connection
 //check if update, or full fetch
 
@@ -29,12 +186,15 @@
 //		echo $argv[$x];
 
 	if ($argc < 2)				//if less than two arguments (script name, command)
-		die($argv[0] . " [update|fetch|create]\n");
+		die($argv[0] . " [update|fetch|create]\n"); 
 	$command = $argv[1];			//get the command
 
 	//open mysql
 	mysql_connect(localhost,$mysqlUser,$mysqlPassword);
 	@mysql_select_db($mysqlDatabase) or die( "Unable to select database " . $mysqlDatabase);
+	//$isstrictmode = mysql_query("SET sql_mode='STRICT_ALL_TABLES'");		//generate an error when can't insert 
+	//if (!$isstrictmode)
+	//	print "Not strict mode\n";
 
 	switch ($command):
 		case "update":
@@ -129,107 +289,42 @@
 				//for each story
 					//save into database
 
-			try {
-				$api = Services_Digg::factory('Stories');
+			$result = mysql_query("SELECT story FROM " . $mysqlDiggsTable);
+			$numStories = mysql_num_rows($result);
 
-				$query = "SELECT story FROM " . $mysqlDiggsTable;
-				$result = mysql_query($query);
-
-				$numStories = mysql_num_rows($result);
-
-				/*$countStories = 0;						//storyid counter
-				while ($row = mysql_fetch_array($result, MYSQL_NUM)) {
-					$storyIDs[$countStories] = $row[0];			//save ids into array
-					$countStories++;
-				}
-
-				if ($numStories != $countStories) print "not matching counts";*/
-
-				$countStories = $numStories;
-				$savedStories = 0;
-				print "Saved ... ";
-				while ($countStories > 0)
-				{
-					sleep(2);
-					$fetchCount = ( $countStories < 100 ? $countStories : 100);	//100 max from api
-					//print $countStories;
-					//extract
-					$storyIDs = array ();		//empty array
-					for ($i = 0; $i < $fetchCount; $i++)
-					{
-						$row = mysql_fetch_array($result, MYSQL_NUM);
-						$storyIDs[$i] = $row[0];		//extract to second array
-					}
-					//now storyids should have enough story ids
-					//call api
-					$params = array( 'count' => 100 );
-					$stories = $api->getStoriesById($storyIDs, $params);
-
-					//print $stories->total . " " . $stories->count . " " . $stories->offset ;
-					if ($fetchCount != $stories->total) print "Fetch did not match total\n";
-					$x = 0;
-					foreach ($stories as $story)
-					{
-						//save each story
-						//var_dump($story);
-
-						//print $story->href . " | " . $story->user->name . " " .  $story->thumbnail->src . "\n";
-
-						$query = "INSERT INTO " . $mysqlStoryTable . " VALUES (" . $story->id . ",'" . $story->link . "'," . $story->submit_date . "," . $story->diggs . "," . $story->comments . "," . (isset($story->promote_date) ? $story->promote_date : $story->submit_date) . ",'" . $story->status . "','" . $story->media . "','" . $story->href . "','" . addslashes($story->title) . "','" . addslashes($story->description) . "','" . $story->user->name . "','" . $story->user->icon;
-						   
-						//inactive user or no user 
-						if (!strcmp($story->user->name,"inactive") || !strcmp($story->user->name,''))
-						{
-							$query .= "',NULL,NULL";
-						} else {
-							$query .= "'," . $story->user->registered . "," . $story->user->profileviews; 
-						}
-						$query .= ",'" . $story->topic->name . "','" . $story->topic->short_name . "','" . $story->container->name . "','" . $story->container->short_name;
-						//missing thumbnail
-						if (isset($story->thumbnail))
-						{
-							$query .= "'," . $story->thumbnail->originalwidth . "," . $story->thumbnail->originalheight . ",'" . $story->thumbnail->contentType . "','" . $story->thumbnail->src . "'," . $story->thumbnail->width . "," . $story->thumbnail->height . ")";
-						} else {
-							$query .= "',NULL,NULL,'','',NULL,NULL)";
-						}
-						//print $query;
-						$status = mysql_query($query);
-						if ($status)
-						{
-							$x++;			//save story counter)
-						} else {
-							//One problem was that I did not add slashes to quotes
-							print "\n--- Did not save " . $story->title . "\n";
-							var_dump($story);
-							print $query . "\n";
-							//print $story->status . "\n";
-						}
-					}
-
-					$savedStories += $x;
-					//print "Did not save " . (100-$x) . " stories\n";
-					print $savedStories . " ... ";
-					$countStories -= $fetchCount;		//decrement counter
-				}
-
-				print "\n---\nTotal # of stories: " . $numStories . "\nStories saved: " . $savedStories . "\nStories not saved: " . ($numStories - $savedStories) . "\n";
-
-
-			} catch (PEAR_Exception $error) {
-				echo $error->getMessage() . "\n";
-			} catch (Services_Digg_Exception $error) {
-				echo $error . '\n';
+			$storyIDs = array ();		//empty array
+			for ($i = 0; $i < $numStories; $i++)
+			{
+				$row = mysql_fetch_array($result, MYSQL_NUM);
+				$storyIDs[$i] = $row[0];		//extract to second array
 			}
+
+			$savedStories = fetch_stories($storyIDs, $mysqlStoryTable);
+
+			print "\n---\nTotal # of stories: " . $numStories . "\nStories saved: " . $savedStories . "\nStories not saved: " . ($numStories - $savedStories) . "\n";
 
 			break;
 		case "update-story-data":
 			break;
-		case "list-unfetched-diggs":
-			// all of the fetched diggs are in story_data
-			// unfetched are those that are in my dugg table, but not in story_data
+		case "fetch-missing-stories":
 
-			// query all from both, zero out fetched in dugg table
-			//    non-zeroed out are those that are unfetched
+			$result1 = mysql_query("SELECT story FROM " . $mysqlDiggsTable);
+			$userDiggsCount = mysql_num_rows($result1);
+			$result2 = mysql_query("SELECT id FROM " . $mysqlStoryTable);
+			$storyCount = mysql_num_rows($result2);
+			if ($storyCount < $userDiggsCount)
+			{
+				$missing = get_missing_stories($result1, $userDiggsCount, $result2, $storyCount);
+				//var_dump($missing);
+				$numMissing = count($missing);
+				print "Missing " . $numMissing . " | " . ($userDiggsCount - $storyCount) . " stories\n";
+				$savedStories = fetch_stories($missing, $mysqlStoryTable);
+				print "\n---\nTotal # of stories: " . $userDiggsCount . "\nPreviously missing stories: " . $numMissing . "\nStories saved: " . $savedStories . "\nStories still missing: " . ($numMissing - $savedStories) . "\n";
+			} elseif ($storyCount == $userDiggsCount) {
+				echo "All stories are fetched!\n";
+			} else {
+				echo "There are extra stories saved that were not dugg.\n";
+			}
 
 			break;
 		case "create-diggs-table":
@@ -274,7 +369,7 @@
 	submit_date     INT(20) UNSIGNED NOT NULL,
 	diggs		INT(11) UNSIGNED NOT NULL,
 	comments	INT(11) UNSIGNED NOT NULL,
-	promote_date	INT(20) UNSIGNED NOT NULL,
+	promote_date	INT(20) UNSIGNED,
 	status		VARCHAR(10) CHARACTER SET utf8,
 	media		VARCHAR(20) CHARACTER SET utf8,
 	href		VARCHAR(130) CHARACTER SET utf8,
@@ -298,7 +393,7 @@
 	PRIMARY KEY (id)
 )";
 			$status = mysql_query($query);
-			$message = ( $status? "Success!\n" : "Table not created\n" );
+			$message = ( $status? "Success!\n" : "Error: Table not created\n" );
 			print $message;
 			break;
 		case "create-story-diggs-table":
@@ -315,7 +410,7 @@
 	PRIMARY KEY (id)
 )";
 			$status = mysql_query($query);
-			$message = ( $status? "Success!\n" : "Table not created\n" );
+			$message = ( $status? "Success!\n" : "Error: Table not created\n" );
 			print $message;
 			break;
 		case "create-comments-table":
@@ -325,6 +420,5 @@
 	endswitch;
 
 	mysql_close();
-
 
 ?>
