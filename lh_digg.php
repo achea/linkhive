@@ -144,7 +144,7 @@ function format_insert_story_query ($story, $mysqlStoryTable)
 
 	//print $story->href . " | " . $story->user->name . " " .  $story->thumbnail->src . "\n";
 
-	$query = "INSERT INTO " . $mysqlStoryTable . " VALUES (" . $story->id . ",'" . addslashes($story->link) . "'," . $story->submit_date . "," . $story->diggs . "," . $story->comments . "," . (isset($story->promote_date) ? $story->promote_date : NULL) . ",'" . $story->status . "','" . $story->media . "','" . $story->href . "','" . addslashes($story->title) . "','" . addslashes($story->description) . "','" . $story->user->name . "','" . $story->user->icon;
+	$query = "INSERT INTO " . $mysqlStoryTable . " VALUES (" . $story->id . ",'" . addslashes($story->link) . "'," . $story->submit_date . "," . $story->diggs . "," . $story->comments . "," . (isset($story->promote_date) ? $story->promote_date : 'NULL') . ",'" . $story->status . "','" . $story->media . "','" . $story->href . "','" . addslashes($story->title) . "','" . addslashes($story->description) . "','" . $story->user->name . "','" . $story->user->icon;
 
 	//inactive user or no user 
 	if (!strcmp($story->user->name,"inactive") || !strcmp($story->user->name,''))
