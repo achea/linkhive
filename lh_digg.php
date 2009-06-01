@@ -374,8 +374,8 @@ function format_insert_story_query ($story, $mysqlStoryTable)
 	media		VARCHAR(20) CHARACTER SET utf8,
 	href		VARCHAR(130) CHARACTER SET utf8,
 
-	title		VARCHAR(66) CHARACTER SET utf8,
-	description	VARCHAR(352) CHARACTER SET utf8,
+	title		VARCHAR(100) CHARACTER SET utf8,
+	description	VARCHAR(600) CHARACTER SET utf8,
 	user_name	VARCHAR(20) CHARACTER SET utf8,
 	user_icon	VARCHAR(60) CHARACTER SET utf8,
 	user_registered	INT(20) UNSIGNED,
@@ -387,7 +387,7 @@ function format_insert_story_query ($story, $mysqlStoryTable)
 	thumbnail_originalwidth	INT(10) UNSIGNED,
 	thumbnail_originalheight	INT(10) UNSIGNED,
 	thumbnail_contentType	VARCHAR(20) CHARACTER SET utf8,
-	thumbnail_src	VARCHAR(60) CHARACTER SET utf8,
+	thumbnail_src	VARCHAR(128) CHARACTER SET utf8,
 	thumbnail_width	INT(10) UNSIGNED,
 	thumbnail_height	INT(10) UNSIGNED,
 	PRIMARY KEY (id)
