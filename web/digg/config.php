@@ -1,5 +1,5 @@
 <?php
 	$mysqlUser = "achea";
 	$mysqlPass = "asdf";
-	$mysqlDatabase = "digg_php";
+	$mysqlDatabase = "lh_digg";
 ?>
