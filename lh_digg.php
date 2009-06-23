@@ -81,6 +81,7 @@ function fetch_diggs ($diggUser, $mysqlDiggsTable, $params)
 				if ($numRows >= 1)
 				{
 					print "Skipping duplicate story " . $digg->story . "\n";
+					//print $digg->date;
 					$numDupes++;
 				} elseif ($numRows == 0)	//not yet in database
 				{
@@ -259,8 +260,10 @@ function format_insert_story_query ($story, $mysqlStoryTable)
 //		echo $argv[$x];
 
 	if ($argc < 2)				//if less than two arguments (script name, command)
-		die("grep case " . $argv[0] . " to see possible commands\n"); 
-	$command = $argv[1];			//get the command
+		$command = "help";
+		#die("grep case " . $argv[0] . " to see possible commands\n"); 
+	else 
+		$command = $argv[1];			//get the command
 
 	//open mysql
 	mysql_connect(localhost,$mysqlUser,$mysqlPassword);
@@ -288,14 +291,15 @@ function format_insert_story_query ($story, $mysqlStoryTable)
 			//   i.e. the date field is when the event happened
 			//
 			// hoping that all the times are included, since we did specify only one user name, but it was for users, not user
-			print "Updating diggs ... ";
 
 			$query = "SELECT MAX(date) FROM " . $mysqlDiggsTable;
 			$result = mysql_query($query);
 			$row = mysql_fetch_array($result, MYSQL_NUM);
-			$minDate = $row[0];	
+			$minDate = $row[0] + 1;				// add one second to skip duplicate : doesn't work ... maybe try longer?
+			print "Updating diggs from " . date("Ymd g:i:sa",$minDate) . " ... ";
 
-			$params = array('count' => 100, 'offset' => 0, 'min_date' => $minDate);
+			// sort date-asc (oldest first) so if dies in the middle, then won't be missing a middle chunk like date-desc (newest first)
+			$params = array('count' => 100, 'offset' => 0, 'min_date' => $minDate, 'sort' => 'date-asc');
 			fetch_diggs($diggUser, $mysqlDiggsTable, $params);
 
 			break;
@@ -338,6 +342,7 @@ function format_insert_story_query ($story, $mysqlStoryTable)
 
 			break;
 		//case "update-story-data":
+			// there isn't a min_date for stories, only min_submit/promote_date
 		//	break;
 		case "fetch-missing-stories":
 
@@ -471,6 +476,8 @@ function format_insert_story_query ($story, $mysqlStoryTable)
 
 			break;
 		case "help":
+			print "grep case " . $argv[0] . " to see possible commands\n"; 
+			break;
 		default:
 			print "Bad command.\n";
 	endswitch;
