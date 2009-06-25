@@ -37,7 +37,7 @@ function get_missing_stories($userDiggs, $userDiggCount, $stories, $storyCount)
 
 function get_storyIDs($mysqlDiggsTable)
 {
-	$result = mysql_query("SELECT story FROM " . $mysqlDiggsTable);
+	$result = mysql_query("SELECT story FROM " . $mysqlDiggsTable . " ORDER BY story ASC");	// oldest first
 	$numStories = mysql_num_rows($result);
 
 	$storyIDs = array ();		//empty array
@@ -434,16 +434,7 @@ function format_insert_story_query ($story, $mysqlStoryTable)
 				//for each story
 					//save into database
 
-			$result = mysql_query("SELECT story FROM " . $mysqlDiggsTable);
-			$numStories = mysql_num_rows($result);
-
-			$storyIDs = array ();		//empty array
-			for ($i = 0; $i < $numStories; $i++)
-			{
-				$row = mysql_fetch_array($result, MYSQL_NUM);
-				$storyIDs[$i] = $row[0];		//extract to second array
-			}
-
+			$storyIDs = get_storyIDs($mysqlDiggsTable);
 			$savedStories = fetch_stories($storyIDs, $mysqlStoryTable);
 
 			print "\n---\nTotal # of stories: " . $numStories . "\nStories saved: " . $savedStories . "\nStories not saved: " . ($numStories - $savedStories) . "\n";
@@ -478,7 +469,7 @@ function format_insert_story_query ($story, $mysqlStoryTable)
 			print "Fetching story diggs";
 
 			// all the stories the user dugg
-			$storyIDs = get_StoryIDs($mysqlDiggsTable);
+			$storyIDs = get_storyIDs($mysqlDiggsTable);
 
 			$story_offset = 0;			// this is for cosmetic purposes
 			if (isset($argv[2]) && is_numeric($argv[2]))
