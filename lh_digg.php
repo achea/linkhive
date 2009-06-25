@@ -609,10 +609,8 @@ function format_insert_story_query ($story, $mysqlStoryTable)
 
 			break;
 		case "help":
-			print "grep case " . $argv[0] . " to see possible commands\n";
-			break;
 		default:
-			print "Bad command.\n";
+			print "grep case " . $argv[0] . " to see possible commands\n";
 	endswitch;
 
 	mysql_close();
