@@ -78,10 +78,9 @@ function fetch_diggs ($diggUser, $mysqlDiggsTable, $params)
 		$numSaved = 0;
 
 		do {
-			sleep(2);		//sleep for 1 second
-			print $diggs->offset . "\n";
 
 			$diggs = $api->getUsersDiggs(array($diggUser), $params);		//needs array as param
+			print $diggs->offset . " ... ";
 			//store it into sql
 
 			foreach ($diggs as $digg)
@@ -111,10 +110,12 @@ function fetch_diggs ($diggUser, $mysqlDiggsTable, $params)
 				}
 
 			}
-			if ($diggs->offset + $diggs->count < $diggs->total)
+			if ($diggs->offset + $diggs->count < $diggs->total)			// is this if check necessary?
 			{
 				//diggs count should be 100 always
 				$params['offset'] = $diggs->offset + $diggs->count;
+				// sleep at the end
+				sleep(2);		//sleep for 1 second
 			}
 			//if offset + count > total, that's all the diggs
 		} while ($diggs->offset + $diggs->count < $diggs->total);
@@ -259,7 +260,8 @@ function fetch_stories ($storyIDs, $mysqlStoryTable)
 		print "Saved ... ";
 		while ($countStories > 0)
 		{
-			sleep(2);
+			if ($countStories < $numStories)
+				sleep(2);
 			$fetchCount = ( $countStories < 100 ? $countStories : 100);	//100 max from api
 			//print $countStories;
 			//extract
@@ -350,7 +352,7 @@ function format_insert_story_query ($story, $mysqlStoryTable)
 	$mysqlPassword="asdf";
 	$mysqlDatabase="lh_digg";
 
-	$diggUser="Gambit89";		//later do dynamic
+	$diggUser="Gambit89";		// TODO later do dynamic
 	$mysqlUpdatesTable = "linkhive";
 	$mysqlDiggsTable = "diggs_" . $diggUser;
 	$mysqlStoryTable = "story_data";
@@ -399,6 +401,7 @@ function format_insert_story_query ($story, $mysqlStoryTable)
 			//   i.e. the date field is when the event happened
 			//
 			// hoping that all the times are included, since we did specify only one user name, but it was for users, not user
+			//     yes
 
 			$query = "SELECT MAX(date) FROM " . $mysqlDiggsTable;
 			$result = mysql_query($query);
@@ -471,7 +474,7 @@ function format_insert_story_query ($story, $mysqlStoryTable)
 			// all the stories the user dugg
 			$storyIDs = get_storyIDs($mysqlDiggsTable);
 
-			$story_offset = 0;			// this is for cosmetic purposes
+			$story_offset = 0;			// this var is for cosmetic purposes
 			if (isset($argv[2]) && is_numeric($argv[2]))
 			{
 				// this argument specifies where in the storyIDs to start from 
@@ -491,7 +494,7 @@ function format_insert_story_query ($story, $mysqlStoryTable)
 			break;
 		case "create-diggs-table":
 			//if exists mysql digg_php table, prompt for deletion
-			print "Creating MySQL table for dugg stories...";
+			print "Creating MySQL table for dugg stories... ";
 
 			//this is an example line from a /diggs endpoint request
 
@@ -510,7 +513,7 @@ function format_insert_story_query ($story, $mysqlStoryTable)
 			print $message;
 			break;
 		case "create-stories-table":
-			print "Creating MySQL table for story data...";
+			print "Creating MySQL table for story data... ";
 
 			//this is an example line from a /diggs endpoint request
 /* <story id="4368401" link="http://maxsangalli.altervista.org/?p=45" submit_date="1196891534" diggs="1" comments="0" status="upcoming" media="news" href="http://digg.com/linux_unix/Jukebox_con_Linux">
