@@ -139,7 +139,7 @@ function fetch_diggs ($diggUser, $mysqlDiggsTable, $params)
 	}
 }
 
-function fetch_story_diggs ($storyIDs, $mysqlStoryDiggsTable, $params)
+function fetch_story_diggs ($storyIDs, $mysqlStoryDiggsTable, $params, $story_offset)
 {
 	// fetch all the diggs for the stories
 	// mix of fetching stories (outer loop) and fetching diggs (inner loop)
@@ -163,14 +163,16 @@ function fetch_story_diggs ($storyIDs, $mysqlStoryDiggsTable, $params)
 			//call api
 			// $params = array( 'count' => 100 );
 
-			print "Story set " . ($numStories - $countStories) . "-" . ($numStories - $countStories + $fetchCount); 
+			// $story_offset is just cosmetic
+			//     defaults to 0
+			print "Story set " . ($numStories - $countStories + $story_offset) . "-" . ($numStories - $countStories + $fetchCount + $story_offset); 
 			// inner loop
 			$numDiggsSaved = 0;
 			$numDiggsDuped = 0;
 
 			do {
 				$diggs = $api->getStoriesDiggs($subStoryIDs, $params);		//needs array as param
-				if ($params['offset'] == 0)									//print total
+				if ($params['offset'] == 0)									//print total @ the first iteration
 					print " (" . $diggs->total . " total): ";
 				print $diggs->offset . " ... ";
 				//store it into sql
@@ -364,8 +366,10 @@ function format_insert_story_query ($story, $mysqlStoryTable)
 //		echo $argv[$x];
 
 	if ($argc < 2)				//if less than two arguments (script name, command)
+	{
 		$command = "help";
 		#die("grep case " . $argv[0] . " to see possible commands\n");
+	}
 	else
 		$command = $argv[1];			//get the command
 
@@ -471,11 +475,28 @@ function format_insert_story_query ($story, $mysqlStoryTable)
 			break;
 		case "fetch-story-diggs":
 			// fetch the individual people who dugg all the stories that user dugg
+			print "Fetching story diggs";
 
 			// all the stories the user dugg
 			$storyIDs = get_StoryIDs($mysqlDiggsTable);
+
+			$story_offset = 0;			// this is for cosmetic purposes
+			if (isset($argv[2]) && is_numeric($argv[2]))
+			{
+				// this argument specifies where in the storyIDs to start from 
+				//     because finishing this can take potentially days
+				// TODO add laststoryidfetched-like so this is automatic
+				//     or in the case where the computer is shutdown and don't get to see the output
+				//         log the output?
+				$story_offset = ($argv[2] + 0);		// this is toInt ?
+				print " (offset " . $argv[2] . ")";
+				$temp_array = array_slice($storyIDs, $argv[2]);
+				$storyIDs = $temp_array;
+			}
+			print " ...\n";
+
 			$params = array('count' => 100, 'offset' => 0, 'sort' => 'date-asc');
-			fetch_story_diggs($storyIDs, $mysqlStoryDiggsTable, $params);
+			fetch_story_diggs($storyIDs, $mysqlStoryDiggsTable, $params, $story_offset);
 			break;
 		case "create-diggs-table":
 			//if exists mysql digg_php table, prompt for deletion
