@@ -35,6 +35,21 @@ function get_missing_stories($userDiggs, $userDiggCount, $stories, $storyCount)
 	return $missing;
 }
 
+function get_storyIDs($mysqlDiggsTable)
+{
+	$result = mysql_query("SELECT story FROM " . $mysqlDiggsTable);
+	$numStories = mysql_num_rows($result);
+
+	$storyIDs = array ();		//empty array
+	for ($i = 0; $i < $numStories; $i++)
+	{
+		$row = mysql_fetch_array($result, MYSQL_NUM);
+		$storyIDs[$i] = $row[0];		//extract to second array
+	}
+
+	return $storyIDs;
+}
+
 function update_maximums($maximums, $story)
 {
 	if ($maximums['link'] < strlen($story->link))
@@ -124,6 +139,94 @@ function fetch_diggs ($diggUser, $mysqlDiggsTable, $params)
 	}
 }
 
+function fetch_story_diggs ($storyIDs, $mysqlStoryDiggsTable, $params)
+{
+	// fetch all the diggs for the stories
+	// mix of fetching stories (outer loop) and fetching diggs (inner loop)
+	// for each set of 100 stories
+	//     there (should) be lots of diggs (thousands, etc) based on $diggs->total
+	//     fetch $diggs->total diggs
+
+	$params_saved = $params;			// save primarily for offset resetting at end of every outer loop
+	try {
+		$api = Services_Digg::factory('Stories');
+		$countStories = $numStories = count($storyIDs);
+		while ($countStories > 0)
+		{
+			if ($countStories < $numStories)	// && $countStories > 0)
+				sleep(10);
+
+			$fetchCount = ( $countStories < 100 ? $countStories : 100);	//100 max from api
+			$subStoryIDs = array_slice($storyIDs, $numStories - $countStories, $fetchCount);
+
+			//now storyids should have enough story ids
+			//call api
+			// $params = array( 'count' => 100 );
+
+			print "Story set " . ($numStories - $countStories) . "-" . ($numStories - $countStories + $fetchCount); 
+			// inner loop
+			$numDiggsSaved = 0;
+			$numDiggsDuped = 0;
+
+			do {
+				$diggs = $api->getStoriesDiggs($subStoryIDs, $params);		//needs array as param
+				if ($params['offset'] == 0)									//print total
+					print " (" . $diggs->total . " total): ";
+				print $diggs->offset . " ... ";
+				//store it into sql
+
+				foreach ($diggs as $digg)
+				{
+					//is the digg a duplicate in the table?
+					$query = "SELECT * FROM " . $mysqlStoryDiggsTable . " WHERE id IN (". $digg->id . ")";
+
+					$result = mysql_query($query);
+					$numRows = mysql_numrows($result);
+					//if there is a row, then it is a duplicate
+
+					if ($numRows >= 1)
+					{
+						print "Skipping duplicate digg by user " . $digg->user . " on " . date("Ymd",$digg->date) .  "\n";
+						//print $digg->date;
+						$numDiggsDuped++;
+					} elseif ($numRows == 0)	//not yet in database
+					{
+						//so save it
+						$query = "INSERT into " . $mysqlStoryDiggsTable . " VALUES (" . $digg->date . "," . $digg->story . "," . $digg->id . ",'" . $digg->user . "','" . $digg->status . "')";
+						//print $query . "\n";
+						$status = mysql_query($query);
+						if ($status)
+							$numDiggsSaved++;
+					} else
+					{
+						print "You should never see this line.\n";
+					}
+
+				}
+				if ($diggs->offset + $diggs->count < $diggs->total)
+				{
+					//diggs count should be 100 always
+					$params['offset'] = $diggs->offset + $diggs->count;
+					// we are continuing the loop
+					sleep(2);		//sleep for 1 second
+				}
+				//if offset + count > total, that's all the diggs
+			} while ($diggs->offset + $diggs->count < $diggs->total);
+
+			print "\nDiggs total: " . $diggs->total . "\nDiggs saved: " . $numDiggsSaved . "\nDiggs duped: " . $numDiggsDuped . "\n";
+
+			$countStories -= $fetchCount;		//decrement counter
+			$params = $params_saved;
+		}
+	} catch (PEAR_Exception $error) {
+		echo $error->getMessage() . "\n";
+	} catch (Services_Digg_Exception $error) {
+		echo $error . '\n';
+	}
+
+	return;
+}
+
 function fetch_stories ($storyIDs, $mysqlStoryTable)
 {
 	//the mysql_fetch_array keeps track of stories fetch so that I didn't have to make another variable to do that
@@ -170,7 +273,7 @@ function fetch_stories ($storyIDs, $mysqlStoryTable)
 
 			//now storyids should have enough story ids
 			//call api
-			$params = array( 'count' => 100 );
+			$params = array( 'count' => 100, 'sort' => 'date-asc');
 			$stories = $api->getStoriesById($subStoryIDs, $params);
 
 			//print $stories->total . " " . $stories->count . " " . $stories->offset ;
@@ -207,7 +310,7 @@ function fetch_stories ($storyIDs, $mysqlStoryTable)
 	}
 
 	//var_dump($maximums);
-	
+
 	return $savedStories;
 }
 
@@ -219,12 +322,12 @@ function format_insert_story_query ($story, $mysqlStoryTable)
 
 	$query = "INSERT INTO " . $mysqlStoryTable . " VALUES (" . $story->id . ",'" . addslashes($story->link) . "'," . $story->submit_date . "," . $story->diggs . "," . $story->comments . "," . (isset($story->promote_date) ? $story->promote_date : 'NULL') . ",'" . $story->status . "','" . $story->media . "','" . $story->href . "','" . addslashes($story->title) . "','" . addslashes($story->description) . "','" . $story->user->name . "','" . $story->user->icon;
 
-	//inactive user or no user 
+	//inactive user or no user
 	if (!strcmp($story->user->name,"inactive") || !strcmp($story->user->name,''))
 	{
 		$query .= "',NULL,NULL";
 	} else {
-		$query .= "'," . $story->user->registered . "," . $story->user->profileviews; 
+		$query .= "'," . $story->user->registered . "," . $story->user->profileviews;
 	}
 	$query .= ",'" . $story->topic->name . "','" . $story->topic->short_name . "','" . $story->container->name . "','" . $story->container->short_name;
 	//missing thumbnail
@@ -250,6 +353,7 @@ function format_insert_story_query ($story, $mysqlStoryTable)
 	$mysqlDiggsTable = "diggs_" . $diggUser;
 	$mysqlStoryTable = "story_data";
 	$mysqlStoryDiggsTable = "story_diggs";
+	$mysqlStoryCommentsTable = "story_comments";
 
 	require_once 'Services/Digg.php';
 	ini_set('user_agent', 'linkhive/0.1');
@@ -261,25 +365,25 @@ function format_insert_story_query ($story, $mysqlStoryTable)
 
 	if ($argc < 2)				//if less than two arguments (script name, command)
 		$command = "help";
-		#die("grep case " . $argv[0] . " to see possible commands\n"); 
-	else 
+		#die("grep case " . $argv[0] . " to see possible commands\n");
+	else
 		$command = $argv[1];			//get the command
 
 	//open mysql
 	mysql_connect(localhost,$mysqlUser,$mysqlPassword);
 	@mysql_select_db($mysqlDatabase) or die( "Unable to select database " . $mysqlDatabase);
-	$isstrictmode = mysql_query("SET sql_mode='STRICT_ALL_TABLES'");		//generate an error when can't insert 
+	$isstrictmode = mysql_query("SET sql_mode='STRICT_ALL_TABLES'");		//generate an error when can't insert
 	if (!$isstrictmode)
 		print "Not strict mode\n";
 
 	//create update table if not exists
-	$query = "CREATE TABLE IF NOT EXISTS linkhive " . 
+	$query = "CREATE TABLE IF NOT EXISTS linkhive " .
 "(
-	type VARCHAR(20) NOT NULL, 
+	type VARCHAR(20) NOT NULL,
 	lastupdate DATETIME DEFAULT NULL
 )";
 	$status = mysql_query($query);
-	if (!$status) 
+	if (!$status)
 		die( "Error: Update table not created" );
 
 	switch ($command):
@@ -308,7 +412,7 @@ function format_insert_story_query ($story, $mysqlStoryTable)
 			//from the beginning
 			//assumed the profile does not edit during the fetch
 
-			$params = array('count' => 100, 'offset' => 0);
+			$params = array('count' => 100, 'offset' => 0, 'sort' => 'date-asc');
 			fetch_diggs($diggUser, $mysqlDiggsTable, $params);
 
 			break;
@@ -364,6 +468,14 @@ function format_insert_story_query ($story, $mysqlStoryTable)
 				echo "There are extra stories saved that were not dugg.\n";
 			}
 
+			break;
+		case "fetch-story-diggs":
+			// fetch the individual people who dugg all the stories that user dugg
+
+			// all the stories the user dugg
+			$storyIDs = get_StoryIDs($mysqlDiggsTable);
+			$params = array('count' => 100, 'offset' => 0, 'sort' => 'date-asc');
+			fetch_story_diggs($storyIDs, $mysqlStoryDiggsTable, $params);
 			break;
 		case "create-diggs-table":
 			//if exists mysql digg_php table, prompt for deletion
@@ -458,7 +570,7 @@ function format_insert_story_query ($story, $mysqlStoryTable)
 			$query = "SELECT MAX(date) FROM " . $mysqlDiggsTable;
 			$result = mysql_query($query);
 			$row = mysql_fetch_array($result, MYSQL_NUM);
-			$minDate = $row[0];	
+			$minDate = $row[0];
 			print "Last diggs fetch: ???\n";
 			print "Last stories fetch: ???\n";
 			print "Newest digg in database: " . date("l F j\, Y", $minDate) . "\n";
@@ -466,7 +578,7 @@ function format_insert_story_query ($story, $mysqlStoryTable)
 			$query = "SELECT COUNT(*) FROM " . $mysqlDiggsTable;
 			$result = mysql_query($query);
 			$row = mysql_fetch_array($result, MYSQL_NUM);
-			$totalDugg = $row[0];	
+			$totalDugg = $row[0];
 			print "Total dugg: " . $totalDugg . "\n";
 			$result1 = mysql_query("SELECT story FROM " . $mysqlDiggsTable);
 			$userDiggsCount = mysql_num_rows($result1);
@@ -476,7 +588,7 @@ function format_insert_story_query ($story, $mysqlStoryTable)
 
 			break;
 		case "help":
-			print "grep case " . $argv[0] . " to see possible commands\n"; 
+			print "grep case " . $argv[0] . " to see possible commands\n";
 			break;
 		default:
 			print "Bad command.\n";
