@@ -140,15 +140,22 @@ function fetch_diggs ($diggUser, $mysqlDiggsTable, $params)
 	}
 }
 
-function fetch_story_diggs ($storyIDs, $mysqlStoryDiggsTable, $params, $story_offset)
+function fetch_story_diggs ($storyIDs, $mysqlStoryDiggsTable, $params, $story_offset, $diggs_offset)
 {
 	// fetch all the diggs for the stories
 	// mix of fetching stories (outer loop) and fetching diggs (inner loop)
 	// for each set of 100 stories
 	//     there (should) be lots of diggs (thousands, etc) based on $diggs->total
 	//     fetch $diggs->total diggs
+	$return_status = 0;						// return status (0 default for "ok", array for resuming after exceptions)	
+	$count = 50;
 
 	$params_saved = $params;			// save primarily for offset resetting at end of every outer loop
+	if ($diggs_offset > 0)				// after saving params, load the offset for the first time only 
+	{
+		$params['offset'] = $diggs_offset;
+	}
+
 	try {
 		$api = Services_Digg::factory('Stories');
 		$countStories = $numStories = count($storyIDs);
@@ -157,7 +164,7 @@ function fetch_story_diggs ($storyIDs, $mysqlStoryDiggsTable, $params, $story_of
 			if ($countStories < $numStories)	// && $countStories > 0)
 				sleep(10);
 
-			$fetchCount = ( $countStories < 100 ? $countStories : 100);	//100 max from api
+			$fetchCount = ( $countStories < $count ? $countStories : $count);	//100 max from api
 			$subStoryIDs = array_slice($storyIDs, $numStories - $countStories, $fetchCount);
 
 			//now storyids should have enough story ids
@@ -166,7 +173,7 @@ function fetch_story_diggs ($storyIDs, $mysqlStoryDiggsTable, $params, $story_of
 
 			// $story_offset is just cosmetic
 			//     defaults to 0
-			print "Story set " . ($numStories - $countStories + $story_offset) . "-" . ($numStories - $countStories + $fetchCount + $story_offset); 
+			print "Story set " . ($numStories - $countStories + $story_offset) . "-" . ($numStories - $countStories + $fetchCount - 1 + $story_offset); 
 			// inner loop
 			$numDiggsSaved = 0;
 			$numDiggsDuped = 0;
@@ -195,7 +202,7 @@ function fetch_story_diggs ($storyIDs, $mysqlStoryDiggsTable, $params, $story_of
 					} elseif ($numRows == 0)	//not yet in database
 					{
 						//so save it
-						$query = "INSERT into " . $mysqlStoryDiggsTable . " VALUES (" . $digg->date . "," . $digg->story . "," . $digg->id . ",'" . $digg->user . "','" . $digg->status . "')";
+						$query = "INSERT into " . $mysqlStoryDiggsTable . " VALUES (" . $digg->date . "," . $digg->story . "," . $digg->id . ",'" . (isset($digg->user) ? $digg->user : NULL ) . "','" . $digg->status . "')";
 						//print $query . "\n";
 						$status = mysql_query($query);
 						if ($status)
@@ -204,7 +211,6 @@ function fetch_story_diggs ($storyIDs, $mysqlStoryDiggsTable, $params, $story_of
 					{
 						print "You should never see this line.\n";
 					}
-
 				}
 				if ($diggs->offset + $diggs->count < $diggs->total)
 				{
@@ -222,12 +228,16 @@ function fetch_story_diggs ($storyIDs, $mysqlStoryDiggsTable, $params, $story_of
 			$params = $params_saved;
 		}
 	} catch (PEAR_Exception $error) {
-		echo $error->getMessage() . "\n";
-	} catch (Services_Digg_Exception $error) {
-		echo $error . '\n';
+		print $error->getMessage() . " [" . $error->getCode() . "]\n";
+		if ($error->getCode() == 500)			// FIXME
+		{
+			// story offset2 is because story offset is for 'cosmetic purposes' and not for passing a offset in stories
+			//    since the real offset is not known here, it must be passed in by the caller
+			//    we can return how many stories have been saved, and therefore need to be offset by
+			$return_status = array('s_off2' => ($numStories - $countStories), 'd_off' => $params['offset'] ); 
+		}
 	}
-
-	return;
+	return $return_status;					//return 0 instead of array if success
 }
 
 function fetch_stories ($storyIDs, $mysqlStoryTable)
@@ -277,7 +287,7 @@ function fetch_stories ($storyIDs, $mysqlStoryTable)
 
 			//now storyids should have enough story ids
 			//call api
-			$params = array( 'count' => 100, 'sort' => 'date-asc');
+			$params = array( 'count' => 100, 'sort' => 'submit_date-asc');
 			$stories = $api->getStoriesById($subStoryIDs, $params);
 
 			//print $stories->total . " " . $stories->count . " " . $stories->offset ;
@@ -475,6 +485,7 @@ function format_insert_story_query ($story, $mysqlStoryTable)
 			$storyIDs = get_storyIDs($mysqlDiggsTable);
 
 			$story_offset = 0;			// this var is for cosmetic purposes
+			$diggs_offset = 0;
 			if (isset($argv[2]) && is_numeric($argv[2]))
 			{
 				// this argument specifies where in the storyIDs to start from 
@@ -483,14 +494,43 @@ function format_insert_story_query ($story, $mysqlStoryTable)
 				//     or in the case where the computer is shutdown and don't get to see the output
 				//         log the output?
 				$story_offset = ($argv[2] + 0);		// this is toInt ?
-				print " (offset " . $argv[2] . ")";
+				print " (story offset " . $argv[2];
 				$temp_array = array_slice($storyIDs, $argv[2]);
 				$storyIDs = $temp_array;
 			}
+			if (isset($argv[3]) && is_numeric($argv[3]))
+			{
+				$diggs_offset = (int)$argv[3];	
+				print ", diggs offset " . $diggs_offset . ")";
+			} elseif (isset($argv[2]) && is_numeric($argv[2]))		// hopefully don't have to handle more than two arguments...
+			{
+				print ")";		//close the parenthesis 
+			}
+
 			print " ...\n";
 
 			$params = array('count' => 100, 'offset' => 0, 'sort' => 'date-asc');
-			fetch_story_diggs($storyIDs, $mysqlStoryDiggsTable, $params, $story_offset);
+			do				// resume on error loop
+			{
+				$error = fetch_story_diggs($storyIDs, $mysqlStoryDiggsTable, $params, $story_offset, $diggs_offset);
+				if (is_array($error))
+				{
+					// loop again, this time adjusting the story offset (if it needs adjusting, + storyIDs), and $diggs_offset
+					$s_off2 = $error['s_off2'];
+					print "Resuming with story offset " . $story_offset;
+					if ($s_off2 != 0)
+					{
+						// remove elements from array, add the count of removed elements to offset
+						$temp_array = array_slice($storyIDs, $s_off2);
+						$storyIDs = $temp_array;
+						$story_offset += $s_off2;
+						print " + " . $s_off2 . " (" . $story_offset . ")";
+					}
+					$diggs_offset = $error['d_off'];
+					print ", diggs offset " . $diggs_offset . " ...\n";
+					sleep(10);					// 'generous' sleep times
+				}
+			} while (is_array($error));
 			break;
 		case "create-diggs-table":
 			//if exists mysql digg_php table, prompt for deletion
