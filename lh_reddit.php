@@ -71,7 +71,14 @@ function isset_bool($var)
 function isset_null($var)
 {
 	// return string null instead of null
-	return ($var != null ? "'" . addslashes($var) . "'" : "null");
+	if ($var instanceOf stdClass)
+	{
+		// TODO: Fix assumption that it is a youtube video
+		return "'" . $var->video_id . "'";
+	}
+	else //if ($var == NULL)
+		return "null";
+	// return ($var != null ? "'" . addslashes($var) . "'" : "null");
 }
 
 	$mysql_user = "achea";
