@@ -13,8 +13,12 @@ class HNUser:
 		self.cj = None
 		self.opener = None
 
+		self.debug = True
+
 		self.db = None
 		self.table_name = None
+		self.query1_template = "INSERT INTO %s "
+		self.query2_template = "(domain,score,link,url,title,author_href,author,comments,id) VALUES('%(domain)s',%(score)d,'%(link)s','%(url)s','%(title)s','%(author_href)s','%(author)s',%(comments)d,%(id)d) ON DUPLICATE KEY UPDATE score=VALUES(score), comments=VALUES(comments)"
 
 	def __del__(self):
 		if self.db:
@@ -55,10 +59,10 @@ class HNUser:
 		c = self.db.cursor()		
 		query = "CREATE TABLE IF NOT EXISTS " + table_name + """
 (
-	domain				VARCHAR(60) CHARACTER SET utf8,
+	domain				VARCHAR(70) CHARACTER SET utf8,
 	score				INT(11) NOT NULL,
 	link				VARCHAR(2000) CHARACTER SET utf8,
-	href				VARCHAR(21) CHARACTER SET utf8,
+	url					VARCHAR(21) CHARACTER SET utf8,
 	title				VARCHAR(300) CHARACTER SET utf8,
 	author_href			VARCHAR(31) CHARACTER SET utf8,
 	author				VARCHAR(21) CHARACTER SET utf8,
@@ -76,7 +80,8 @@ class HNUser:
 		Want to specify how many pages back to go
 		num_requests = 0 means no limit"""
 
-		assert self.table_name is not None
+		if self.debug:
+			sys.stderr.write('fetching %s\n' % ("/saved?id=" + self.userName))
 
 		# the initial page is different from the rest
 		page = self.opener.open("http://news.ycombinator.com/saved?id=" + self.userName).read()
@@ -100,7 +105,9 @@ class HNUser:
 		# if count == 0:
 			#print "error"
 
-		self.__save_links(story_table,count)
+		temp_count = self.__save_links(story_table,count)
+		story_errors = temp_count
+		story_count = count - temp_count		# total - errors
 		# does python have do .. while ?
 		while ((len(story_table)-2) % 3) == 0 and count > 0:		# while exists a "More" link
 			#print "in loop"
@@ -108,6 +115,8 @@ class HNUser:
 			# get the next page
 			next_page = story_table.contents[len(story_table)-1].contents[1].contents[0]['href']
 			#print next_page
+			if self.debug:
+				sys.stderr.write('fetching %s\n' % next_page)
 			page = self.opener.open("http://news.ycombinator.com" + next_page).read().replace("\r\n",'')
 			soup = BeautifulSoup(page)
 			story_table = soup.contents[0].contents[0].nextSibling.contents[0].contents[0].contents[0].nextSibling.nextSibling.contents[0].contents[0]
@@ -120,14 +129,27 @@ class HNUser:
 			#if count == 0:
 			#	print "error"
 
-			self.__save_links(story_table,count)
-			#print count
+			temp_count = self.__save_links(story_table,count)
+			# though we have count, it is the theoretical saved
+			# story_count stores the actual saved
+			story_count += count - temp_count
+			story_errors += temp_count
+
+		print "Saved " + str(story_count) + " with " + str(story_errors) + " 'errors'."
+
 
 	def __save_links(self,story_table,count):
-		"""Save links to database
+		"""Save links to database.  Returns count of possible 'errors'
 
 		Assume error checking is already done
 		And that there will be no errors here"""
+		
+		assert self.table_name is not None
+
+		c = self.db.cursor()
+		c.execute("SET sql_mode='STRICT_ALL_TABLES'")	# generate an error when can't insert
+		story_errors = 0
+
 		for x in range(count):
 			stuff1 = story_table.contents[0 + x*3].contents[2].contents[0]
 
@@ -140,6 +162,23 @@ class HNUser:
 				# like stuff2.string = "self"
 				domain_text = "self"
 				
+			# odd case 3 (dead link)
+			# if the link was dead, then...
+			# the domain has the title
+			#	so have to adjust that the 
+			# the 'dead' text can go into the link (apparently, the domain is still somewhere... too lazy to navigate the soup)
+			# 	it is in the title 
+			title_text = stuff1.string
+			try:
+				story_link = stuff1['href']
+			except TypeError:
+				#story_link = ""
+				story_link = title_text
+				# move the domain to title
+				title_text = domain_text
+				# TODO domain is somewhere...
+				domain_text = ""
+
 			stuff3 = story_table.contents[1 + x*3].contents[1]
 
 			# odd case 2 (0 comments)
@@ -148,20 +187,31 @@ class HNUser:
 			else:
 				num_comments = int(stuff3.contents[4].string.split(" ")[0])
 
-			# odd case 3 (dead link)
-			try:
-				story_link = stuff1['href']
-			except TypeError:
-				story_link = ""
 
 			data = { 'id':			int(stuff3.contents[4]['href'].split('=')[1]),
-					'title':		stuff1.string,
+					'title':		title_text,
 					'link': 		story_link,
 					'domain': 		domain_text,
 					'score': 		int(stuff3.contents[0].string.split(" ")[0]),
 					'author': 		stuff3.contents[2].string,
 					'author_href':	stuff3.contents[2]['href'],
 					'comments':		num_comments,
-					'href':			stuff3.contents[4]['href'] }
-			print data
+					'url':			stuff3.contents[4]['href'] }
 
+			query_stuff = self.__format_mysql(data)
+			status = c.execute(query_stuff[0] % query_stuff[1])
+			if not status:
+				story_errors += 1
+
+		return story_errors
+
+	def __format_mysql(self,story):
+		"""Given a story dictionary, return query"""
+
+		# title and link need quotes escaping
+		story2 = story
+		story2['title'] = story['title'].replace('"', '\\"').replace("'", "\\'")
+		story2['link'] = story['link'].replace('"', '\\"').replace("'", "\\'")
+
+		query = (self.query1_template % self.table_name) + self.query2_template
+		return [query, story2]
