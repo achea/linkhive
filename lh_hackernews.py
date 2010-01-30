@@ -8,6 +8,7 @@ from BeautifulSoup import BeautifulSoup
 
 class HNUser:
 	def __init__(self,userName,passwd):
+		self.ALLOWEDCACHETYPES = ["update","all"]
 		self.userName = userName
 		self.passwd = passwd
 		self.cj = None
@@ -73,12 +74,15 @@ class HNUser:
 """
 		c.execute(query)
 
-	def cache_stories(self,num_requests = 0):
+	def cache_stories(self,cache_type):
 		"""Get the saved links to save going back
 		
 		Stops when there is no more "More" link
 		Want to specify how many pages back to go
 		num_requests = 0 means no limit"""
+
+		if not isinstance(cache_type, int):			#int must also be positive
+			assert cache_type in self.ALLOWEDCACHETYPES
 
 		if self.debug:
 			sys.stderr.write('fetching %s\n' % ("/saved?id=" + self.userName))

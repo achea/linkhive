@@ -19,7 +19,7 @@ class RedditUser:
 	def __init__(self,userName,passwd=None):
 		self.ALLOWEDPAGES = ["liked","disliked","hidden","saved"]		# this is a waste of space
 																# is there a way to def global?
-		self.ALLOWEDCACHETYPES = ["update","max"]
+		self.ALLOWEDCACHETYPES = ["update","all"]
 		self.userName=userName
 		self.passwd=passwd
 		self.loginOK = False
