@@ -104,7 +104,7 @@ class RedditUser:
 	likes			BOOL,
 	num_comments	INT(11) UNSIGNED NOT NULL,
 	id				VARCHAR(11) CHARACTER SET utf8,
-	title			VARCHAR(300) CHARACTER SET utf8,
+	title			VARCHAR(400) CHARACTER SET utf8,
 	hidden			BOOL,
 	over_18			BOOL,
 	score			INT(11) NOT NULL,
