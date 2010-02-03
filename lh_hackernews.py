@@ -112,8 +112,16 @@ class HNUser:
 		temp_count = self.__save_links(story_table,count)
 		# new, updated, dupes
 		story_counts = [temp_count[0],temp_count[1],temp_count[2]]
+
+		# check for max pages
+		page_count = 0
+		if isinstance(cache_type, int) and cache_type >= 1:
+			max_pages = cache_type - 1 	# because we already saved one
+		else:
+			max_pages = 999		# not really, won't get here 
+
 		# does python have do .. while ?
-		while ((len(story_table)-2) % 3) == 0 and count > 0:		# while exists a "More" link
+		while ((len(story_table)-2) % 3) == 0 and count > 0 and page_count < max_pages:		# while exists a "More" link
 			#print "in loop"
 			time.sleep(5)
 			# get the next page
@@ -134,13 +142,14 @@ class HNUser:
 			#	print "error"
 
 			temp_count = self.__save_links(story_table,count)
+			page_count += 1
 			story_counts[0] += temp_count[0]
 			story_counts[1] += temp_count[1]
 			story_counts[2] += temp_count[2]
 
 			# it is tricky to say when to stop, because HN returns voted stories according to their date, so if it's 7 days old, it'll be on e.g. page 4, rather than the top of the first page
 			# so you might miss it if you stop on one page of dupes
-			if story_counts[2] >= 60 and temp_count[2] == 30:
+			if story_counts[2] >= 60 and temp_count[2] == 30 and cache_type == "update":
 				# if the last fetch was all dupes, and already 2 pages worth (though the previous 30 could span more than one page)
 				break;
 

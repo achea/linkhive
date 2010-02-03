@@ -225,7 +225,7 @@ class RedditUser:
 			else:
 				print "how to die?"
 
-			if story_dupes >= 200:		# if more than 2 full pages
+			if story_dupes >= 200 and cache_type == "update":		# if more than 2 full pages
 				break;
 
 		print "Saved " + str(story_new) + " new stories with " + str(story_updates) + " updated stories and " + str(story_dupes) + " duplicate, but not updated stories."

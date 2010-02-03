@@ -39,7 +39,7 @@ def read_args():
 				help="fetch stories from Hacker News")
 	parser.add_option("--reddit-fetch",
 				action="store", type="string", dest="reddit_fetch", default="update",
-				help="type of fetch to perform (update|all|xx) default: update")
+				help="type of fetch to perform (update|all) default: update")
 	parser.add_option("--hackernews-fetch",
 				action="store", type="string", dest="hackernews_fetch", default="update",
 				help="type of fetch to perform (update|all|xx) default: update")
@@ -131,7 +131,7 @@ if __name__=="__main__":
 			# where is the scope of reddit_page ?
 			reddit_fetch = int(options.reddit_fetch)
 		except ValueError:
-			if options.reddit_fetch == "max":
+			if options.reddit_fetch == "all":
 				reddit_fetch = 10
 			else:
 				# RedditUser asserts will take care of the other cases
@@ -152,7 +152,7 @@ if __name__=="__main__":
 		try:
 			hackernews_fetch = int(options.hackernews_fetch)
 		except ValueError:
-			if options.hackernews_fetch == "max":
+			if options.hackernews_fetch == "all":
 				hackernews_fetch = 10
 			else:
 				# asserts handle the rest
