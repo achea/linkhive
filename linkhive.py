@@ -78,6 +78,7 @@ if __name__=="__main__":
 		config.add_section(reddit_user_section)
 		config.set(reddit_user_section,"passwd","")
 		config.set(reddit_user_section,"user","")
+		config.set(reddit_user_section,"key","")
 
 		# hacker news section 
 		config.add_section(hn_mysql_section)
@@ -101,9 +102,13 @@ if __name__=="__main__":
 	options = read_args()
 
 	if options.reddit:
+		if config.has_option(reddit_user_section,"key") and config.get(reddit_user_section,"key") != "":
+			has_reddit_key = True
+		else:
+			has_reddit_key = False
 		# check that at least have specified user and passwd
 		# allow mysql user with no password
-		if ((not config.has_section(reddit_mysql_section) or not config.has_option(reddit_mysql_section,"user") or config.get(reddit_mysql_section,"user") == "") or (not config.has_section(reddit_user_section) or not config.has_option(reddit_user_section,"user") or config.get(reddit_user_section,"user") == "")):
+		if not has_reddit_key and ((not config.has_section(reddit_mysql_section) or not config.has_option(reddit_mysql_section,"user") or config.get(reddit_mysql_section,"user") == "") or (not config.has_section(reddit_user_section) or not config.has_option(reddit_user_section,"user") or config.get(reddit_user_section,"user") == "")):
 			print "Fill out %s..." % configFile
 			sys.exit(1)
 		# assume here that the config file is filled out (it has already been read)
@@ -113,6 +118,9 @@ if __name__=="__main__":
 						"db" : config.get(reddit_mysql_section,"db") }
 		reddit_user = { "user" : config.get(reddit_user_section,"user"),
 						"passwd" : config.get(reddit_user_section, "passwd") }
+		if has_reddit_key:
+			reddit_user["key"] =  config.get(reddit_user_section, "key")
+
 	# same check for hacker news
 	if options.hackernews:
 		if ((not config.has_section(hn_mysql_section) or not config.has_option(hn_mysql_section,"user") or config.get(hn_mysql_section,"user") == "") or (not config.has_section(hn_user_section) or not config.has_option(hn_user_section,"user") or config.get(hn_user_section,"user") == "")):
@@ -139,7 +147,10 @@ if __name__=="__main__":
 
 		#print options.reddit_page,reddit_fetch,dir(reddit_fetch)
 		#sys.exit(0)
-		user1 = lh_reddit.RedditUser(reddit_user["user"],reddit_user["passwd"])
+		if has_reddit_key:
+			user1 = lh_reddit.RedditUser(reddit_user["user"],None,reddit_user["key"])
+		else:
+			user1 = lh_reddit.RedditUser(reddit_user["user"],reddit_user["passwd"])
 		user1.initdb(reddit_mysql["host"],reddit_mysql["user"],reddit_mysql["passwd"],reddit_mysql["db"])
 		user1.login()
 		# options.reddit_page has values liked, saved, etc..

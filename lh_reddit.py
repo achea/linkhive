@@ -16,12 +16,13 @@ class RedditUser:
 	Authenticates when necessary
 	userName = name of the user"""
 
-	def __init__(self,userName,passwd=None):
+	def __init__(self,userName,passwd=None,key=None):
 		self.ALLOWEDPAGES = ["liked","disliked","hidden","saved"]		# this is a waste of space
 																# is there a way to def global?
 		self.ALLOWEDCACHETYPES = ["update","all"]
 		self.userName=userName
 		self.passwd=passwd
+		self.key = key		# if no key, should be None (not other empty things like 0 or "")
 		self.loginOK = False
 		#self.dbOK = False
 		self.db = None			#none for now (I think must be instantiated in __init__)
@@ -52,18 +53,24 @@ class RedditUser:
 	#	return self.userName
 
 	def login(self):
-		# TODO add cached cookies support
-		self.cj = cookielib.CookieJar()
-		self.opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(self.cj))
-		urllib2.install_opener(self.opener)
-		login_data = urllib.urlencode({'user': self.userName, 'passwd': self.passwd})
-		status = self.opener.open('http://www.reddit.com/api/login/username', login_data)
-		#print "status code: " + str(status.code)
-		# now check if login credentials ok
-		# TODO add a user agent
-		status.close()
+		"""Logs in to reddit
 
-		time.sleep(2)
+		Even if don't need to login since we have a key, still call this to set up the OpenerDirector"""
+		if self.key is not None:
+			self.opener = urllib2.build_opener()
+		else:
+			# TODO add cached cookies support
+			self.cj = cookielib.CookieJar()
+			self.opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(self.cj))
+			urllib2.install_opener(self.opener)
+			login_data = urllib.urlencode({'user': self.userName, 'passwd': self.passwd})
+			status = self.opener.open('http://www.reddit.com/api/login/username', login_data)
+			#print "status code: " + str(status.code)
+			# now check if login credentials ok
+			# TODO add a user agent
+			status.close()
+
+			time.sleep(2)
 	
 	def initdb(self,host='localhost',user=None,passwd=None,db_name='linkhive',table_name="reddit_stories"):
 		"""Open a connection to the database"""
@@ -182,10 +189,15 @@ class RedditUser:
 		c = self.db.cursor()
 		c.execute("SET sql_mode='STRICT_ALL_TABLES'")	# generate an error when can't insert
 
+		if self.key is not None:
+			key_string = "?feed=" + self.key + "&user=" + self.userName
+		else:
+			key_string = ""		# to make sure that there is something
+
 		if page_type == "saved":
-			sourceurl = "http://www.reddit.com/saved.json"
+			sourceurl = "http://www.reddit.com/saved.json" + key_string
 		else:			# liked, disliked, hidden
-			sourceurl = "http://www.reddit.com/user/" + self.userName + "/" + page_type + "/.json"
+			sourceurl = "http://www.reddit.com/user/" + self.userName + "/" + page_type + "/.json" + key_string
 
 		#yield header_template % dict(exported_url = escape_html(sourceurl))
 
