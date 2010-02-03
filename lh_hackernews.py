@@ -110,8 +110,8 @@ class HNUser:
 			#print "error"
 
 		temp_count = self.__save_links(story_table,count)
-		story_errors = temp_count
-		story_count = count - temp_count		# total - errors
+		# new, updated, dupes
+		story_counts = [temp_count[0],temp_count[1],temp_count[2]]
 		# does python have do .. while ?
 		while ((len(story_table)-2) % 3) == 0 and count > 0:		# while exists a "More" link
 			#print "in loop"
@@ -134,12 +134,17 @@ class HNUser:
 			#	print "error"
 
 			temp_count = self.__save_links(story_table,count)
-			# though we have count, it is the theoretical saved
-			# story_count stores the actual saved
-			story_count += count - temp_count
-			story_errors += temp_count
+			story_counts[0] += temp_count[0]
+			story_counts[1] += temp_count[1]
+			story_counts[2] += temp_count[2]
 
-		print "Saved " + str(story_count) + " with " + str(story_errors) + " 'errors'."
+			# it is tricky to say when to stop, because HN returns voted stories according to their date, so if it's 7 days old, it'll be on e.g. page 4, rather than the top of the first page
+			# so you might miss it if you stop on one page of dupes
+			if story_counts[2] >= 60 and temp_count[2] == 30:
+				# if the last fetch was all dupes, and already 2 pages worth (though the previous 30 could span more than one page)
+				break;
+
+		print "Saved " + str(story_counts[0]) + " new stories with " + str(story_counts[1]) + " updated stories and " + str(story_counts[2]) + " duplicate, but not updated stories."
 
 
 	def __save_links(self,story_table,count):
@@ -152,7 +157,9 @@ class HNUser:
 
 		c = self.db.cursor()
 		c.execute("SET sql_mode='STRICT_ALL_TABLES'")	# generate an error when can't insert
-		story_errors = 0
+		story_dupes = 0
+		story_new = 0
+		story_updates = 0
 
 		for x in range(count):
 			stuff1 = story_table.contents[0 + x*3].contents[2].contents[0]
@@ -204,10 +211,16 @@ class HNUser:
 
 			query_stuff = self.__format_mysql(data)
 			status = c.execute(query_stuff[0] % query_stuff[1])
-			if not status:
-				story_errors += 1
+			if status == 0:
+				story_dupes += 1
+			elif status == 2:
+				story_updates += 1
+			elif status == 1:
+				story_new += 1
+			else:
+				print "how to die?"
 
-		return story_errors
+		return (story_new,story_updates,story_dupes)
 
 	def __format_mysql(self,story):
 		"""Given a story dictionary, return query"""

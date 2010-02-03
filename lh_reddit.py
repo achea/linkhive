@@ -188,8 +188,16 @@ class RedditUser:
 			sourceurl = "http://www.reddit.com/user/" + self.userName + "/" + page_type + "/.json"
 
 		#yield header_template % dict(exported_url = escape_html(sourceurl))
-		story_count = 0
-		story_errors = 0
+
+		# the status numbers are I'm guessing the rows affected when query
+		# going with these assumptions
+		#   insert new = 1
+		#   update with new values = 2
+		#   try to update, but no new values = 0
+		#      0 could also mean other things, like ... ?
+		story_new = 0
+		story_dupes = 0
+		story_updates = 0
 
 		for link in self.get_links(sourceurl):
 			if link['kind'] != 't3':
@@ -201,8 +209,8 @@ class RedditUser:
 
 			query_stuff = self.__format_mysql(data)
 			status = c.execute(query_stuff[0] % query_stuff[1])
-			if not status:
-				story_errors += 1
+			if status == 0:
+				story_dupes += 1
 				# if an update happened, the status returns false??
 				#	does that mean that it updated, or is it a bug and should've returned true?
 				#print "Did not save '" + data['title'] + "'"
@@ -210,10 +218,17 @@ class RedditUser:
 				#print query_stuff[0] % query_stuff[1]
 				#print status
 				#print c.messages
+			elif status == 2:
+				story_updates += 1
+			elif status == 1:
+				story_new += 1
 			else:
-				story_count += 1
+				print "how to die?"
 
-		print "Saved " + str(story_count) + " with " + str(story_errors) + " errors."
+			if story_dupes >= 200:		# if more than 2 full pages
+				break;
+
+		print "Saved " + str(story_new) + " new stories with " + str(story_updates) + " updated stories and " + str(story_dupes) + " duplicate, but not updated stories."
 
 	def __format_mysql(self,story):
 		"""Given a story dictionary, format the appropriate SQL"""
