@@ -14,6 +14,7 @@ class HNUser:
 		self.cj = None
 		self.opener = None
 
+		self.sleep_time = 5
 		self.debug = True
 
 		self.db = None
@@ -46,6 +47,8 @@ class HNUser:
 		login_data = urllib.urlencode({'fnid': fnid['value'], 'u': self.userName, 'p': self.passwd})
 		self.opener.open('http://news.ycombinator.com/y', login_data)
 		time.sleep(1)
+
+		self.opener.addheaders = [('User-Agent', 'linkhive/0.1')]
 
 	def initdb(self,host='localhost',user=None,passwd=None,db_name='linkhive',table_name="hn_stories"):
 		"""Open a connection to the database"""
@@ -123,7 +126,7 @@ class HNUser:
 		# does python have do .. while ?
 		while ((len(story_table)-2) % 3) == 0 and count > 0 and page_count < max_pages:		# while exists a "More" link
 			#print "in loop"
-			time.sleep(5)
+			time.sleep(self.sleep_time)
 			# get the next page
 			next_page = story_table.contents[len(story_table)-1].contents[1].contents[0]['href']
 			#print next_page

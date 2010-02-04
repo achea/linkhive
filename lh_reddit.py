@@ -43,7 +43,7 @@ class RedditUser:
 		self.table_name = None		# saving to mysql can't be called before initdb
 		# the full query is query1 + valid columns + VALUES(valid columns) + query2
 		self.query1_template = "INSERT INTO %s "
-		self.query2_template = "ON DUPLICATE KEY UPDATE clicked=VALUES(clicked), ups=VALUES(ups), downs=VALUES(downs), likes=VALUES(likes), num_comments=VALUES(num_comments), hidden=VALUES(hidden), score=VALUES(score), saved=VALUES(saved)";
+		self.query2_template = "ON DUPLICATE KEY UPDATE clicked=VALUES(clicked), ups=VALUES(ups), downs=VALUES(downs), likes=VALUES(likes), num_comments=VALUES(num_comments), hidden=VALUES(hidden), score=VALUES(score), saved=VALUES(saved), selftext=VALUES(selftext), selftext_html=VALUES(selftext_html)";
 
 	def __del__(self):
 		if self.db:
@@ -67,10 +67,12 @@ class RedditUser:
 			status = self.opener.open('http://www.reddit.com/api/login/username', login_data)
 			#print "status code: " + str(status.code)
 			# now check if login credentials ok
-			# TODO add a user agent
 			status.close()
 
 			time.sleep(2)
+
+		#globally add user agent
+		self.opener.addheaders = [('User-Agent', 'linkhive/0.1')]
 	
 	def initdb(self,host='localhost',user=None,passwd=None,db_name='linkhive',table_name="reddit_stories"):
 		"""Open a connection to the database"""
