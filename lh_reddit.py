@@ -315,8 +315,8 @@ class RedditUser:
 			query_cols += "thumbnail,"
 			query_values += "'%(thumbnail)s',"
 		
-		query_cols += "subreddit_id,downs,name,created,url,title,created_utc,num_comments,ups) "
-		query_values += "'%(subreddit_id)s',%(downs)d,'%(name)s',%(created).2f,'%(url)s','%(title)s',%(created_utc).2f,%(num_comments)d,%(ups)d) "
+		query_cols += "subreddit_id,subreddit,downs,name,created,url,title,created_utc,num_comments,ups) "
+		query_values += "'%(subreddit_id)s','%(subreddit)s',%(downs)d,'%(name)s',%(created).2f,'%(url)s','%(title)s',%(created_utc).2f,%(num_comments)d,%(ups)d) "
 
 		query = (self.query1_template % self.table_name) + query_cols + query_values + self.query2_template
 		
