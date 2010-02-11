@@ -1,5 +1,22 @@
 #!/usr/bin/env python
 
+#    This file is part of Linkhive.
+#    Copyright (C) 2009-2010 Andree Chea <achea89@gmail.com>
+#    Portions copyright (C) 2010 David King
+#
+#    Linkhive is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 2 of the License, or
+#    (at your option) any later version.
+#
+#    Linkhive is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with Linkhive.  If not, see <http://www.gnu.org/licenses/>.
+
 import urllib, urllib2, cookielib
 import MySQLdb
 
@@ -128,6 +145,8 @@ class RedditUser:
 		'''
 		Given a reddit JSON URL, yield the JSON Link API objects,
 		following 'after' links
+
+		See http://www.github.com/ketralnis/redditexporter for the original source
 		'''
 		# rip apart the URL, make sure it has .json at the end, and set
 		# the limit
@@ -321,31 +340,6 @@ class RedditUser:
 		query = (self.query1_template % self.table_name) + query_cols + query_values + self.query2_template
 		
 		return [query , story2]
-
-		"""{u'domain': u'youtube.com', 
-u'media_embed': {u'content': u'&lt;object width="490" height="295"&gt;&lt;param name="movie" value="http://www.youtube.com/v/dpbYEfXoA2E&amp;fs=1"&gt;&lt;/param&gt;&lt;param name="wmode" value="transparent"&gt;&lt;/param&gt;&lt;param name="allowFullScreen" value="true"&gt;&lt;/param&gt;&lt;embed src="http://www.youtube.com/v/dpbYEfXoA2E&amp;fs=1" type="application/x-shockwave-flash" wmode="transparent" allowFullScreen="true" width="480" height="295"&gt;&lt;/embed&gt;&lt;/object&gt;', u'width': 480, u'scrolling': False, u'height': 295},
-u'subreddit': u'trance', 
-u'selftext_html': None, 
-u'selftext': u'', 
-u'likes': True, 
-u'saved': False, 
-u'id': u'au7ry', 
-u'clicked': False, 
-u'author': u'sassanix', 
-u'media': {u'video_id': u'dpbYEfXoA2E', u'type': u'youtube.com'}, 
-u'score': 3, 
-u'over_18': False, 
-u'hidden': False, 
-u'thumbnail': u'', 
-u'subreddit_id': u't5_2qi03', 
-u'downs': 0, 
-u'name': u't3_au7ry', 
-u'created': 1264485682.0, 
-u'url': u'http://www.youtube.com/watch?v=dpbYEfXoA2E', 
-u'title': u'Heatbeat - Nebula (Original Mix)', 
-u'created_utc': 1264485682.0, 
-u'num_comments': 0, 
-u'ups': 3}"""
 
 	def __bool2str(self,val):
 		"""Given a boolean, returns a cooresponding string (mysql-style)"""

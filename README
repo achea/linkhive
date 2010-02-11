@@ -1,0 +1,86 @@
+Linkhive v0.1 by Andree Chea
+
+Linkhive is a python program that lets you fetch and save your stories from various social news sites into a local MySQL database.  Currently you can fetch your liked/saved/disliked/hidden stories from reddit ( http://www.reddit.com/ ), and your saved stories from Hacker News ( http://news.ycombinator.com/ ).
+
+Software requirements
+=====================
+You need at least Python, MySQL, the MySQLdb and BeautifulSoup modules for Python installed.
+
+MySQLdb:  http://www.sourceforge.net/projects/mysql-python
+BeautifulSoup:  http://www.crummy.com/software/BeautifulSoup/
+
+Linkhive has currently been tested with Python 2.6.4/MySQL 5.0.84 with MySQLdb 1.2.3 rc1 and BeautifulSoup 3.0.7.  YMMV.
+
+Setup
+=====
+Linkhive needs access to a MySQL database.  Create a user and grant at least SELECT, INSERT, and UPDATE privileges.  The default database is 'linkhive', though it can be named whatever you want.  Linkhive will create at most two tables in this database.  Here is an example to create a new user and grant it privileges to a MySQL database hosted on the local computer:
+
+    CREATE USER 'mysqlusername'@'localhost' IDENTIFIED BY 'some_pass';
+    GRANT SELECT,INSERT,UPDATE ON linkhive.* TO 'mysqlusername'@'localhost';
+
+Now run linkhive.py once with no options to generate a linkhive.cfg file and fill in the mysql sections appropriately.  There are two in the event that you wish to save your Hacker News stories in a different database than the reddit one, otherwise they should be identical.
+
+For Hacker News authentication, a username and password is required, so be careful of who gets to see linkhive.cfg (or maybe you don't care? :-) ).  For reddit, you can authenticate with either a password or private key, the latter of which I recommend.  You can find your key by going to the reddit private rss feeds page ( http://www.reddit.com/prefs/feeds ) and extracting the alphanumeric string that follows the ?feed= in the URLs (they should all be the same).
+
+When setup is done, the config file should look similar to this:
+
+[reddit_user]
+passwd = 
+user = yourredditusername
+key = abcdefghijklmnopqrstuvwxyz01234567890
+
+[hn_user]
+passwd = yourpassword
+user = yourhnusername
+
+[hn_mysql]
+passwd = mysqlpassword
+host = localhost
+db = linkhive
+user = mysqlusername
+
+[reddit_mysql]
+passwd = mysqlpassword
+host = localhost
+db = linkhive
+user = mysqlusername
+
+Usage
+=====
+Run linkhive.py with either the --reddit or --hackernews options (or both) to begin fetching.  
+
+Condensed usage is as follows, but you can always pass the --help option for the full usage:
+
+./linkhive.py [--reddit [--reddit-fetch=(update|all)] [--reddit-page=(liked|saved|disliked|hidden)]] [--hackernews [--hackernews-fetch=(update|all|xx)]]
+
+Fetching defaults to 'update' for both reddit and Hacker News, which means keep fetching until there is approximately two full pages of duplicates.  For Hacker News, you can specify 'xx' number of pages to fetch with the --hackernews-fetch option - just know that the limit is 7 pages of 30.  Specifying 'all' will get all these pages (i.e. it is equivalent to setting 'xx'=7).  At the moment, you can not specify the number of pages to fetch for reddit.
+
+The reddit page defaults to liked stories, which you can change with the --reddit-page option.
+
+At the end of each fetch, the program will then print a generally summary of what it did/didn't save.
+
+Notes
+=====
+* You will not get accurate scores and comment counts, especially not in real time (and please don't try as it'll put unnecessary strain on the reddit and ycombinator servers).  If you want to get close though, wait a while ( e.g. > 1 day ) so that the rate slows down, then do an update.  Ideally just before your browsing sessions so that new stories won't push back old stories.
+
+* Hacker news dates are given mostly in "hours ago", so an accurate date isn't possible (though I could get close +- 1 hour).  If it was more than a day old, then accuracy is only by day.  This program ignores dates for now.
+
+* A fetch for a user's complete history is currently impossible as the sites don't reveal them (reddit goes back 1000 stories, and Hacker news goes back 210 stories).
+
+* If some fields were not present (e.g. reddit's selftext fields), the value is NULL by default.
+
+* I'd love feedback on improvements/criticisms - this is my first Python app in a while and most of it isn't very Pythonic. :-)  Also, I realize the dependency on a full MySQL server/service is kind of clunky - so if anyone has a better way to locally store JSON formatted objects, I'd be interested in hearing it.
+
+Credits
+=======
+David "ketralnis" King for redditexporter ( http://www.github.com/ketralnis/redditexporter )
+
+License
+=======
+Copyright (C) 2009-2010 Andree Chea <achea89@gmail.com>
+
+Linkhive is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 2 of the License, or (at your option) any later version.
+
+Linkhive is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with Linkhive.  If not, see <http://www.gnu.org/licenses/>.

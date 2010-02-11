@@ -1,5 +1,21 @@
 #!/usr/bin/env python
 
+#    This file is part of Linkhive.
+#    Copyright (C) 2009-2010 Andree Chea <achea89@gmail.com>
+#
+#    Linkhive is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 2 of the License, or
+#    (at your option) any later version.
+#
+#    Linkhive is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with Linkhive.  If not, see <http://www.gnu.org/licenses/>.
+
 import lh_reddit,lh_hackernews
 import ConfigParser
 from optparse import OptionParser
@@ -55,7 +71,7 @@ def read_args():
 	return options
 
 if __name__=="__main__":
-	configFile = "config.cfg"
+	configFile = "linkhive.cfg"
 	config = ConfigParser.RawConfigParser()
 	reddit_mysql_section = "reddit_mysql"
 	reddit_user_section = "reddit_user"			
