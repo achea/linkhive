@@ -98,7 +98,7 @@ class RedditUser:
 		self.table_name = table_name
 
 		# if successful, store the state
-		self.db = MySQLdb.connect(host=host, user=user, passwd=passwd, db=db_name)
+		self.db = MySQLdb.connect(host=host, user=user, passwd=passwd, db=db_name, sql_mode='STRICT_ALL_TABLES')
 			# connect returns true even if unsuccessful according to manual?
 			# TODO check if it connected
 
@@ -208,7 +208,6 @@ class RedditUser:
 			assert cache_type in self.ALLOWEDCACHETYPES
 
 		c = self.db.cursor()
-		c.execute("SET sql_mode='STRICT_ALL_TABLES'")	# generate an error when can't insert
 
 		if self.key is not None:
 			key_string = "?feed=" + self.key + "&user=" + self.userName
