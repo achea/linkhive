@@ -4,12 +4,12 @@ Linkhive is a python program that lets you fetch and save your stories from vari
 
 Software requirements
 =====================
-You need at least Python, MySQL, the MySQLdb and BeautifulSoup modules for Python installed.
+You need at least Python, MySQL 5, and the MySQLdb and BeautifulSoup modules for Python installed.
 
 MySQLdb:  http://www.sourceforge.net/projects/mysql-python
 BeautifulSoup:  http://www.crummy.com/software/BeautifulSoup/
 
-Linkhive has currently been tested with Python 2.6.4/MySQL 5.0.84 with MySQLdb 1.2.3 rc1 and BeautifulSoup 3.0.7.  YMMV.
+Linkhive has currently been tested to work with Python 2.6.4/MySQL 5.0.84 with MySQLdb 1.2.3-rc1 and BeautifulSoup 3.0.7.  YMMV.
 
 Setup
 =====
@@ -70,6 +70,10 @@ Notes
 * If some fields were not present (e.g. reddit's selftext fields), the value is NULL by default.
 
 * I'd love feedback on improvements/criticisms - this is my first Python app in a while and most of it isn't very Pythonic. :-)  Also, I realize the dependency on a full MySQL server/service is kind of clunky - so if anyone has a better way to locally store JSON formatted objects, I'd be interested in knowing it.
+
+Todo
+====
+* Rewrite Hacker News scraping to be more easily adjustable in the future
 
 Credits
 =======
