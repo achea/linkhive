@@ -13,16 +13,16 @@ Linkhive has currently been tested with Python 2.6.4/MySQL 5.0.84 with MySQLdb 1
 
 Setup
 =====
-Linkhive needs access to a MySQL database.  Create a user and grant at least SELECT, INSERT, and UPDATE privileges.  The default database is 'linkhive', though it can be named whatever you want.  Linkhive will create at most two tables in this database.  Here is an example to create a new user and grant it privileges to a MySQL database hosted on the local computer:
+Linkhive needs access to a MySQL database.  Create a user and grant at least CREATE, SELECT, INSERT, and UPDATE privileges.  The default database is 'linkhive', though it can be named whatever you want.  Linkhive will create at most two tables in this database.  Here is an example to create a new user and grant it privileges to a MySQL database hosted on the local computer:
 
     CREATE USER 'mysqlusername'@'localhost' IDENTIFIED BY 'some_pass';
-    GRANT SELECT,INSERT,UPDATE ON linkhive.* TO 'mysqlusername'@'localhost';
+    GRANT CREATE,SELECT,INSERT,UPDATE ON linkhive.* TO 'mysqlusername'@'localhost';
 
 Now run linkhive.py once with no options to generate a linkhive.cfg file and fill in the mysql sections appropriately.  There are two in the event that you wish to save your Hacker News stories in a different database than the reddit one, otherwise they should be identical.
 
 For Hacker News authentication, a username and password is required, so be careful of who gets to see linkhive.cfg (or maybe you don't care? :-) ).  For reddit, you can authenticate with either a password or private key, the latter of which I recommend.  You can find your key by going to the reddit private rss feeds page ( http://www.reddit.com/prefs/feeds ) and extracting the alphanumeric string that follows the ?feed= in the URLs (they should all be the same).
 
-When setup is done, the config file should look similar to this:
+When setup is done, the config file might look similar to the following.  If you don't use one of the social news sites, simply leave the fields in the sections blank:
 
 [reddit_user]
 passwd = 
@@ -53,7 +53,7 @@ Condensed usage is as follows, but you can always pass the --help option for the
 
 ./linkhive.py [--reddit [--reddit-fetch=(update|all)] [--reddit-page=(liked|saved|disliked|hidden)]] [--hackernews [--hackernews-fetch=(update|all|xx)]]
 
-Fetching defaults to 'update' for both reddit and Hacker News, which means keep fetching until there is approximately two full pages of duplicates.  For Hacker News, you can specify 'xx' number of pages to fetch with the --hackernews-fetch option - just know that the limit is 7 pages of 30.  Specifying 'all' will get all these pages (i.e. it is equivalent to setting 'xx'=7).  At the moment, you can not specify the number of pages to fetch for reddit.
+Fetching defaults to 'update' for both reddit and Hacker News, which means keep fetching until there is approximately two full pages of duplicates.  For Hacker News, you can specify 'xx' number of pages to fetch with the --hackernews-fetch option - just know that the limit is 7 pages of 30.  Specifying 'all' will get all these pages.  At the moment, you can not specify the number of pages to fetch for reddit.
 
 The reddit page defaults to liked stories, which you can change with the --reddit-page option.
 
@@ -61,15 +61,15 @@ At the end of each fetch, the program will then print a generally summary of wha
 
 Notes
 =====
-* You will not get accurate scores and comment counts, especially not in real time (and please don't try as it'll put unnecessary strain on the reddit and ycombinator servers).  If you want to get close though, wait a while ( e.g. > 1 day ) so that the rate slows down, then do an update.  Ideally just before your browsing sessions so that new stories won't push back old stories.
+* You will not get accurate scores and comment counts, especially not in real time (and please don't try as it'll put unnecessary strain on the Reddit and Y Combinator servers).  If you want to get close though, wait a while ( e.g. > 1 day ) so that the rate slows down, then do an update.  Ideally, this should happen just before your browsing sessions so that new stories won't push back old stories.
 
-* Hacker news dates are given mostly in "hours ago", so an accurate date isn't possible (though I could get close +- 1 hour).  If it was more than a day old, then accuracy is only by day.  This program ignores dates for now.
+* Hacker News dates are given mostly in "hours ago", so an accurate date isn't possible (though I could get close +- 1 hour).  If it was more than a day old, then accuracy is only by day.  This program ignores dates for now.
 
-* A fetch for a user's complete history is currently impossible as the sites don't reveal them (reddit goes back 1000 stories, and Hacker news goes back 210 stories).
+* A fetch for a user's complete history is currently impossible as the sites don't reveal them (reddit goes back 1000 stories, and Hacker News goes back 210 stories).
 
 * If some fields were not present (e.g. reddit's selftext fields), the value is NULL by default.
 
-* I'd love feedback on improvements/criticisms - this is my first Python app in a while and most of it isn't very Pythonic. :-)  Also, I realize the dependency on a full MySQL server/service is kind of clunky - so if anyone has a better way to locally store JSON formatted objects, I'd be interested in hearing it.
+* I'd love feedback on improvements/criticisms - this is my first Python app in a while and most of it isn't very Pythonic. :-)  Also, I realize the dependency on a full MySQL server/service is kind of clunky - so if anyone has a better way to locally store JSON formatted objects, I'd be interested in knowing it.
 
 Credits
 =======
