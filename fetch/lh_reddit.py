@@ -346,9 +346,8 @@ class RedditUser:
 		return [query , story2]
 
 	def __bool2str(self,val):
-		"""Given a boolean, returns a cooresponding string (mysql-style)"""
+		"""Given a boolean, returns a cooresponding string (mysql-style, meaning no quotes)"""
 
 		# there's got to be a more pretty way to do this
-		if val:
-			return "true"
-		return "false"
+		# yes there is!
+		return str(val).lower()
