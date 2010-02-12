@@ -33,12 +33,13 @@ class RedditUser:
 	Authenticates when necessary
 	userName = name of the user"""
 
-	def __init__(self,userName,passwd=None,key=None):
+	def __init__(self,userName,passwd=None,key=None,quietness = 0):
 		self.ALLOWEDPAGES = ["liked","disliked","hidden","saved"]		# this is a waste of space
 																# is there a way to def global?
 		self.ALLOWEDCACHETYPES = ["update","all"]
 		self.userName=userName
 		self.passwd=passwd
+		self.quietness = quietness
 		self.key = key		# if no key, should be None (not other empty things like 0 or "")
 		self.loginOK = False
 		#self.dbOK = False
@@ -55,7 +56,7 @@ class RedditUser:
 		self.request_limit = None # how many requests to make to reddit before
 								 # stopping (set to None to disable)
 
-		self.debug = True
+		self.debug = False
 
 		self.table_name = None		# saving to mysql can't be called before initdb
 		# the full query is query1 + valid columns + VALUES(valid columns) + query2
@@ -163,8 +164,11 @@ class RedditUser:
 				urlencode(parsed_params, doseq = True), fragment)
 		composed_sourceurl = urlparse.urlunparse(new_urltuple)
 
+		debug_print = 'fetching %s\n' % composed_sourceurl
 		if self.debug:
-			sys.stderr.write('fetching %s\n' % composed_sourceurl)
+			sys.stderr.write(debug_print)
+		elif self.quietness < 1:
+			print debug_print,
 
 		if (self.opener is None):	# if it was as defined by __init__
 			text = urllib.urlopen(composed_sourceurl).read()
@@ -260,7 +264,8 @@ class RedditUser:
 			if story_dupes >= 200 and cache_type == "update":		# if more than 2 full pages
 				break;
 
-		print "Saved " + str(story_new) + " new stories with " + str(story_updates) + " updated stories and " + str(story_dupes) + " duplicate, but not updated stories."
+		if self.quietness < 2:
+			print "Saved " + str(story_new) + " new stories with " + str(story_updates) + " updated stories and " + str(story_dupes) + " duplicate, but not updated stories."
 
 	def __format_mysql(self,story):
 		"""Given a story dictionary, format the appropriate SQL"""

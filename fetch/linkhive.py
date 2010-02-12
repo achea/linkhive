@@ -44,9 +44,9 @@ def read_args():
 	usage = "usage: %prog [options]"
 	parser = OptionParser(usage=usage, version="linkhive v0.1 by Andree Chea")
 	#parser.add_option("-h", "--help"
-	#parser.add_option("-v", "--verbose",
-	#			action="count", dest="verbosity",
-	#			help="increase verbose output (maximum vv)")
+	parser.add_option("-q", "--quiet",
+				action="count", dest="quietness",
+				help="decrease output verbosity (maximum qq)")
 	parser.add_option("--reddit",
 				action="store_true", dest="reddit", default=False,
 				help="fetch stories from reddit")
@@ -164,9 +164,9 @@ if __name__=="__main__":
 		#print options.reddit_page,reddit_fetch,dir(reddit_fetch)
 		#sys.exit(0)
 		if has_reddit_key:
-			user1 = lh_reddit.RedditUser(reddit_user["user"],None,reddit_user["key"])
+			user1 = lh_reddit.RedditUser(reddit_user["user"],None,reddit_user["key"], quietness = options.quietness)
 		else:
-			user1 = lh_reddit.RedditUser(reddit_user["user"],reddit_user["passwd"])
+			user1 = lh_reddit.RedditUser(reddit_user["user"],reddit_user["passwd"], quietness = options.quietness)
 		user1.initdb(reddit_mysql["host"],reddit_mysql["user"],reddit_mysql["passwd"],reddit_mysql["db"])
 		user1.login()
 		# options.reddit_page has values liked, saved, etc..
@@ -185,7 +185,7 @@ if __name__=="__main__":
 				# asserts handle the rest
 				hackernews_fetch = options.hackernews_fetch
 
-		user1 = lh_hackernews.HNUser(hn_user["user"],hn_user["passwd"])
+		user1 = lh_hackernews.HNUser(hn_user["user"],hn_user["passwd"],quietness = options.quietness)
 		user1.initdb(hn_mysql["host"],hn_mysql["user"],hn_mysql["passwd"],hn_mysql["db"])
 		user1.login()
 		user1.cache_stories(hackernews_fetch)

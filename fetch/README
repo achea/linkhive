@@ -51,7 +51,7 @@ Run linkhive.py with either the --reddit or --hackernews options (or both) to be
 
 Condensed usage is as follows, but you can always pass the --help option for the full usage:
 
-./linkhive.py [--reddit [--reddit-fetch=(update|all)] [--reddit-page=(liked|saved|disliked|hidden)]] [--hackernews [--hackernews-fetch=(update|all|xx)]]
+./linkhive.py [--reddit [--reddit-fetch=(update|all)] [--reddit-page=(liked|saved|disliked|hidden)]] [--hackernews [--hackernews-fetch=(update|all|xx)]] [--quiet]
 
 Fetching defaults to 'update' for both reddit and Hacker News, which means keep fetching until there is approximately two full pages of duplicates.  For Hacker News, you can specify 'xx' number of pages to fetch with the --hackernews-fetch option - just know that the limit is 7 pages of 30.  Specifying 'all' will get all these pages.  At the moment, you can not specify the number of pages to fetch for reddit.
 

@@ -23,15 +23,17 @@ import urllib,urllib2,cookielib
 from BeautifulSoup import BeautifulSoup
 
 class HNUser:
-	def __init__(self,userName,passwd):
+	def __init__(self,userName,passwd,quietness = 0):
 		self.ALLOWEDCACHETYPES = ["update","all"]
 		self.userName = userName
 		self.passwd = passwd
+		self.quietness = quietness
+
 		self.cj = None
 		self.opener = None
 
 		self.sleep_time = 5
-		self.debug = True
+		self.debug = False
 
 		self.db = None
 		self.table_name = None
@@ -103,8 +105,12 @@ class HNUser:
 		if not isinstance(cache_type, int):			#int must also be positive
 			assert cache_type in self.ALLOWEDCACHETYPES
 
+		# debug check overrides quietness
+		debug_print = 'fetching %s\n' % ("/saved?id=" + self.userName)
 		if self.debug:
-			sys.stderr.write('fetching %s\n' % ("/saved?id=" + self.userName))
+			sys.stderr.write(debug_print)
+		elif self.quietness < 1:		# one level
+			print debug_print,
 
 		# the initial page is different from the rest
 		page = self.opener.open("http://news.ycombinator.com/saved?id=" + self.userName).read()
@@ -146,8 +152,11 @@ class HNUser:
 			# get the next page
 			next_page = story_table.contents[len(story_table)-1].contents[1].contents[0]['href']
 			#print next_page
+			debug_print = 'fetching %s\n' % next_page
 			if self.debug:
-				sys.stderr.write('fetching %s\n' % next_page)
+				sys.stderr.write(debug_print)
+			elif self.quietness < 1:
+				print debug_print,			# , to not print the default newline since we already have one
 			page = self.opener.open("http://news.ycombinator.com" + next_page).read().replace("\r\n",'')
 			soup = BeautifulSoup(page)
 			story_table = soup.contents[0].contents[0].nextSibling.contents[0].contents[0].contents[0].nextSibling.nextSibling.contents[0].contents[0]
@@ -172,7 +181,8 @@ class HNUser:
 				# if the last fetch was all dupes, and already 2 pages worth (though the previous 30 could span more than one page)
 				break;
 
-		print "Saved " + str(story_counts[0]) + " new stories with " + str(story_counts[1]) + " updated stories and " + str(story_counts[2]) + " duplicate, but not updated stories."
+		if self.quietness < 2:
+			print "Saved " + str(story_counts[0]) + " new stories with " + str(story_counts[1]) + " updated stories and " + str(story_counts[2]) + " duplicate, but not updated stories."
 
 
 	def __save_links(self,story_table,count):
