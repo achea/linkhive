@@ -13,7 +13,14 @@ class LhMainWindow : public QMainWindow
 	public:
 		LhMainWindow(QWidget *parent=0);
 
+	private slots:
+		// menu related slots
+		//void close();		// already inherited
+		void about();
+	
 	private:
+		void createUI();
+
 		SearchPanel *search1;
 		ResultView *results1;
 };
