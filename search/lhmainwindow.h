@@ -5,6 +5,7 @@
 
 class SearchPanel;
 class ResultView;
+class LhSettings;
 
 class LhMainWindow : public QMainWindow
 {
@@ -17,12 +18,14 @@ class LhMainWindow : public QMainWindow
 		// menu related slots
 		//void close();		// already inherited
 		void about();
+		void showSettings();
 	
 	private:
 		void createUI();
 
 		SearchPanel *search1;
 		ResultView *results1;
+		LhSettings *settings1;
 };
 
 #endif

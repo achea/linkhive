@@ -9,5 +9,5 @@ INCLUDEPATH += .
 QT += sql
 
 # Input
-HEADERS += connection.h lhmainwindow.h resultview.h searchpanel.h
-SOURCES += lhmainwindow.cpp main.cpp resultview.cpp searchpanel.cpp
+HEADERS += connection.h lhmainwindow.h resultview.h searchpanel.h lhsettings.h
+SOURCES += lhmainwindow.cpp main.cpp resultview.cpp searchpanel.cpp lhsettings.cpp
