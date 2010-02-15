@@ -38,6 +38,7 @@ class HNUser:
 		self.db = None
 		self.table_name = None
 		self.query1_template = "INSERT INTO %s "
+		# don't save if link became dead
 		self.query2_template = "(domain,score,link,url,title,author_href,author,comments,id) VALUES('%(domain)s',%(score)d,'%(link)s','%(url)s','%(title)s','%(author_href)s','%(author)s',%(comments)d,%(id)d) ON DUPLICATE KEY UPDATE score=VALUES(score), comments=VALUES(comments)"
 
 	def __del__(self):
@@ -199,33 +200,27 @@ class HNUser:
 		story_updates = 0
 
 		for x in range(count):
-			stuff1 = story_table.contents[0 + x*3].contents[2].contents[0]
+			# assume that first anchor is the title
+			stuff1 = story_table.contents[0 + x*3].contents[2].find('a')
 
 			# odd case 1 (no link, like a reddit self post)
 			try:
-				stuff2 = story_table.contents[0 + x*3].contents[2].contents[1]
+				stuff2 = story_table.contents[0 + x*3].contents[2].find('span', { "class": "comhead" })
 				domain_text = stuff2.string.strip().lstrip('(').rstrip(')')
-			except IndexError:
+			except AttributeError:				# NoneType (i.e. no span element) has no attribute string
 				# is there a way to add attributes to any object?
 				# like stuff2.string = "self"
 				domain_text = "self"
 				
 			# odd case 3 (dead link)
-			# if the link was dead, then...
-			# the domain has the title
-			#	so have to adjust that the 
-			# the 'dead' text can go into the link (apparently, the domain is still somewhere... too lazy to navigate the soup)
-			# 	it is in the title 
+			#   it messed with stuff2 ordering, so use find to ignore the ordering 
+			#   if dead link, then should be no href on the anchor
 			title_text = stuff1.string
 			try:
-				story_link = stuff1['href']
-			except TypeError:
-				#story_link = ""
-				story_link = title_text
-				# move the domain to title
-				title_text = domain_text
-				# TODO domain is somewhere...
-				domain_text = ""
+				story_link = stuff1['href']		# 'self' domains still have link, though redundant
+			except KeyError:
+				story_link = "[dead]"
+				# domain_text should be correct, since still is present when dead and used find() to locate it
 
 			stuff3 = story_table.contents[1 + x*3].contents[1]
 
