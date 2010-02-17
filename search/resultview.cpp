@@ -1,14 +1,16 @@
 #include "resultview.h"
+#include "lhglobals.h"
 
 #include <QTableView>
 #include <QSqlQueryModel>
+#include <QtGlobal>
 
 ResultView::ResultView(QWidget *parent) : QTabWidget(parent)
 {
 	// add a new tab with QTableView with nothing
 	QSqlQueryModel *model = new QSqlQueryModel;
 	// the text for the query defaults to boring count 
-	model->setQuery("SELECT COUNT(*) FROM reddit_stories");
+	model->setQuery("SELECT COUNT(*) FROM reddit_stories", QSqlDatabase::database(LhGlobals::Instance().getConnNameFromTableName("reddit_stories")));
 	QTableView *tableView = new QTableView;
 	tableView->setModel(model);
 	tableView->setEditTriggers(QAbstractItemView::NoEditTriggers);
@@ -34,7 +36,10 @@ void ResultView::updateCurrentTabQuery(QStringList queryList)
 	query.append(" WHERE ");
 	query.append(queryList.at(2));
 
-	model->setQuery(query);
+	QString connName = LhGlobals::Instance().getConnNameFromTableName(queryList.at(1));
+	Q_ASSERT(connName.length() > 0);
+
+	model->setQuery(query, QSqlDatabase::database(connName));
 	tempView->setModel(model);
 	// when does QTableView know to recalc the display?
 	delete m;
