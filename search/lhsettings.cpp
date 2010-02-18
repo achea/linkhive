@@ -67,8 +67,7 @@ TableTab::TableTab(QWidget *parent) : QWidget(parent)
 	// tableGroup has the QComboBox and two QPushButtons
 	QGroupBox *tableGroup = new QGroupBox(tr("Tables"));
 	tableComboBox = new QComboBox;
-	// TODO change on updateConfigCopies, so looks nicer
-	tableComboBox->setMinimumWidth(150);	// because the text isn't setting the minimum for us
+	tableComboBox->setSizeAdjustPolicy(QComboBox::AdjustToContents);
 
 	// TODO icons for pushbuttons
 	QPushButton *tableAddButton = new QPushButton(tr("New"));
