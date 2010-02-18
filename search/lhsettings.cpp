@@ -127,7 +127,9 @@ TableTab::TableTab(QWidget *parent) : QWidget(parent)
 	
 	// set the configs for the first time (before the connect(), because combobox->addItem triggers currentIndexChanged, and setCurrentDb()'s findText will not find it)
 	updateConfigCopies( LhGlobals::Instance().tableNames, LhGlobals::Instance().connectionConfigs);
-	connect(tableComboBox, SIGNAL(currentIndexChanged(const QString &)), this, SLOT(updateTableChanged(const QString &)));
+	// activated instead of currentIndexChanged because don't want to be notified if programmatically changed.  Though, activated can trigger even if no change, but probably no problems with that
+	connect(tableComboBox, SIGNAL(activated(const QString &)), this, SLOT(updateTableChanged(const QString &)));
+	connect(configComboBox, SIGNAL(activated(const QString &)), this, SLOT(updateConnectionChanged(const QString &)));
 	
 }
 
@@ -153,7 +155,9 @@ void TableTab::updateConfigCopies(const QHash<QString, int>& tables, const QHash
 	{
 		name = CONNECTION_PREFIX;
 		name += QString::number(configNum);
-		configComboBox->addItem(name); 
+		// FIXME but even though same config number, might be different data
+		if (configComboBox->findText(name) < 0)		// only add if not found
+			configComboBox->addItem(name); 
 	}
 
 	// update 
@@ -190,4 +194,16 @@ void TableTab::setCurrentDb(int connectionId)
 	configDbUser->setText(config.value("user"));
 	configDbPass->setText(config.value("pass"));
 	configDbDb->setText(config.value("db"));
+}
+
+void TableTab::updateConnectionChanged(const QString& name)
+{
+	// unlike updateTableChanged, the only reliable identifier is the number at the end of the name string
+	// so extract it and cast to int
+	QString connString = name;
+	connString.replace(CONNECTION_PREFIX,"");
+	//qDebug() << "name : " << name << " conn : " << connString;
+	bool status;
+	this->setCurrentDb(connString.toInt(&status));
+	Q_ASSERT(status);
 }

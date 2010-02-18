@@ -37,6 +37,7 @@ class TableTab : public QWidget
 		
 	private slots:
 		void updateTableChanged(const QString &);
+		void updateConnectionChanged(const QString &);
 	private:
 		QHash<QString,int> tableNames;
 		QHash<int, QHash<QString, QString> > connectionConfigs;
