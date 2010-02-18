@@ -229,6 +229,11 @@ void TableTab::saveConfigLocal()
 
 	// assume QHash only allows one value per key
 	connectionConfigs.insert(connId,tempConfig);
+
+	// also this connection id for the current table
+	QString curTable = tableComboBox->currentText();
+	Q_ASSERT(tableNames.contains(curTable));
+	tableNames.insert(curTable,connId);
 }
 
 void TableTab::saveConfigGlobal()
