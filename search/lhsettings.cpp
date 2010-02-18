@@ -1,5 +1,8 @@
 #include "lhsettings.h"
 #include "lhglobals.h"
+#include "datatypes.h"
+
+#include <QtGlobal>
 
 #include <QTabWidget>
 #include <QHBoxLayout>
@@ -39,6 +42,18 @@ void LhSettings::saveAccept()
 	this->accept();
 }
 
+void LhSettings::showEvent(QShowEvent *e)
+{
+	// does this get called if dialog minimized, then maximized?
+	// position 0 is TableTab
+	// plain widget() just returns QWidget; we want TableTab
+	TableTab *tempTab = static_cast<TableTab*>(tabWidget->widget(0));
+	tempTab->updateConfigCopies(LhGlobals::Instance().tableNames,LhGlobals::Instance().connectionConfigs);
+	QMessageBox::information(this,"about to show","about to show");
+	// TODO how to propery call parent class functions
+	QDialog::showEvent(e);
+}
+
 /* TableTab */
 // lets user enter database connection settings for each table (that stores data for social news site stories, or personal annotation notes, or --)
 TableTab::TableTab(QWidget *parent) : QWidget(parent)
@@ -47,18 +62,14 @@ TableTab::TableTab(QWidget *parent) : QWidget(parent)
 	// TODO typedefs to match so when need to change, only need to change in one typedef
 	// TODO how to update on focus?
 	// create a local copy, so that current isn't modified
-	QHash<QString,int> tableNames = LhGlobals::Instance().tableNames;
-	QHash<int,QHash<QString,QString> > connectionConfigs = LhGlobals::Instance().connectionConfigs;
+	//QHash<QString,int> tableNames = LhGlobals::Instance().tableNames;
+	//QHash<int,QHash<QString,QString> > connectionConfigs = LhGlobals::Instance().connectionConfigs;
 	
 	// tableGroup has the QComboBox and two QPushButtons
 	QGroupBox *tableGroup = new QGroupBox(tr("Tables"));
-	QComboBox *tableComboBox = new QComboBox;
-
-	QString name;
-	foreach( name, tableNames.keys())
-	{
-		tableComboBox->addItem(name);
-	}
+	tableComboBox = new QComboBox;
+	// TODO change on updateConfigCopies, so looks nicer
+	tableComboBox->setMinimumWidth(150);	// because the text isn't setting the minimum for us
 
 	// TODO icons for pushbuttons
 	QPushButton *tableAddButton = new QPushButton(tr("Add"));
@@ -75,7 +86,7 @@ TableTab::TableTab(QWidget *parent) : QWidget(parent)
 	// now the config group
 	QGroupBox *configGroup = new QGroupBox(tr("Database configuration"));
 	// two layouts in VBox, top is HBox and bottom is Grid
-	QComboBox *configComboBox = new QComboBox;
+	configComboBox = new QComboBox;
 
 	QPushButton *configAddButton = new QPushButton(tr("Add"));
 	QPushButton *configDelButton = new QPushButton(tr("Delete"));
@@ -86,13 +97,14 @@ TableTab::TableTab(QWidget *parent) : QWidget(parent)
 	layout1->addWidget(configComboBox);
 	layout1->addWidget(configAddButton);
 	layout1->addWidget(configDelButton);
+	layout1->addStretch();
 
 	// now the db form
-	QComboBox *configDbType = new QComboBox;
-	QLineEdit *configDbHost = new QLineEdit;
-	QLineEdit *configDbUser = new QLineEdit;
-	QLineEdit *configDbPass = new QLineEdit;
-	QLineEdit *configDbDb = new QLineEdit;
+	configDbType = new QComboBox;
+	configDbHost = new QLineEdit;
+	configDbUser = new QLineEdit;
+	configDbPass = new QLineEdit;
+	configDbDb = new QLineEdit;
 
 	QFormLayout *configDbLayout = new QFormLayout;
 	configDbLayout->addRow(tr("Type:"),configDbType);
@@ -113,4 +125,63 @@ TableTab::TableTab(QWidget *parent) : QWidget(parent)
 	mainLayout->addWidget(configGroup);
 	mainLayout->addStretch();
 	setLayout(mainLayout);
+}
+
+void TableTab::updateConfigCopies(const QHash<QString, int>& tables, const QHash<int,QHash<QString,QString> >& configs)
+{
+	tableNames = tables;
+	connectionConfigs = configs;
+
+	// add to tableComboBox
+	tableComboBox->clear();		// a slot
+	QString name;
+	foreach( name, tableNames.keys())
+	{
+		tableComboBox->addItem(name);
+	}
+
+	// add to configComboBox
+	configComboBox->clear();
+	int configNum;
+	foreach( configNum, connectionConfigs.keys())
+	{
+		name = CONNECTION_PREFIX;
+		name += QString::number(configNum);
+		configComboBox->addItem(name); 
+	}
+
+	// update 
+	this->updateTableChanged();
+}
+
+void TableTab::updateTableChanged()
+{
+	QString name = tableComboBox->currentText();
+	// name is the id
+	Q_ASSERT(tableNames.contains(name));
+	int configNum = tableNames.value(name);
+
+	this->setCurrentDb(configNum);
+}
+
+// given a connection id, display the text
+void TableTab::setCurrentDb(int connectionId)
+{
+	// update comboboxes and lineedits
+	// assume combobox has all the connection names
+	// now have to display the right one
+	// get the index of the combobox with the CONNECTION_PREFIX+connectionId text
+	QString name = CONNECTION_PREFIX;
+	name += QString::number(connectionId);
+	int index = configComboBox->findText(name);
+	Q_ASSERT(index >= 0);		// -1 if not found
+
+	configComboBox->setCurrentIndex(index);
+	Q_ASSERT(connectionConfigs.contains(connectionId));
+	// TODO typedef
+	QHash<QString, QString> config = connectionConfigs.value(connectionId);
+	configDbHost->setText(config.value("host"));
+	configDbUser->setText(config.value("user"));
+	configDbPass->setText(config.value("pass"));
+	configDbDb->setText(config.value("db"));
 }
