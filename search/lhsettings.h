@@ -36,7 +36,7 @@ class TableTab : public QWidget
 		void updateConfigCopies(const QHash<QString, int>&, const QHash<int,QHash<QString,QString> >&);
 		
 	private slots:
-		void updateTableChanged();
+		void updateTableChanged(const QString &);
 	private:
 		QHash<QString,int> tableNames;
 		QHash<int, QHash<QString, QString> > connectionConfigs;

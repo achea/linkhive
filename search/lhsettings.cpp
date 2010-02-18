@@ -3,6 +3,7 @@
 #include "datatypes.h"
 
 #include <QtGlobal>
+#include <QDebug>
 
 #include <QTabWidget>
 #include <QHBoxLayout>
@@ -47,9 +48,9 @@ void LhSettings::showEvent(QShowEvent *e)
 	// does this get called if dialog minimized, then maximized?
 	// position 0 is TableTab
 	// plain widget() just returns QWidget; we want TableTab
+	QMessageBox::information(this,"about to show","about to show");
 	TableTab *tempTab = static_cast<TableTab*>(tabWidget->widget(0));
 	tempTab->updateConfigCopies(LhGlobals::Instance().tableNames,LhGlobals::Instance().connectionConfigs);
-	QMessageBox::information(this,"about to show","about to show");
 	// TODO how to propery call parent class functions
 	QDialog::showEvent(e);
 }
@@ -62,8 +63,6 @@ TableTab::TableTab(QWidget *parent) : QWidget(parent)
 	// TODO typedefs to match so when need to change, only need to change in one typedef
 	// TODO how to update on focus?
 	// create a local copy, so that current isn't modified
-	//QHash<QString,int> tableNames = LhGlobals::Instance().tableNames;
-	//QHash<int,QHash<QString,QString> > connectionConfigs = LhGlobals::Instance().connectionConfigs;
 	
 	// tableGroup has the QComboBox and two QPushButtons
 	QGroupBox *tableGroup = new QGroupBox(tr("Tables"));
@@ -125,6 +124,11 @@ TableTab::TableTab(QWidget *parent) : QWidget(parent)
 	mainLayout->addWidget(configGroup);
 	mainLayout->addStretch();
 	setLayout(mainLayout);
+	
+	// set the configs for the first time (before the connect(), because combobox->addItem triggers currentIndexChanged, and setCurrentDb()'s findText will not find it)
+	updateConfigCopies( LhGlobals::Instance().tableNames, LhGlobals::Instance().connectionConfigs);
+	connect(tableComboBox, SIGNAL(currentIndexChanged(const QString &)), this, SLOT(updateTableChanged(const QString &)));
+	
 }
 
 void TableTab::updateConfigCopies(const QHash<QString, int>& tables, const QHash<int,QHash<QString,QString> >& configs)
@@ -133,11 +137,13 @@ void TableTab::updateConfigCopies(const QHash<QString, int>& tables, const QHash
 	connectionConfigs = configs;
 
 	// add to tableComboBox
-	tableComboBox->clear();		// a slot
+	//tableComboBox->clear();		// a slot
+		// don't clear, since currentIndexChanged will trigger with each addItem and "" isn't contained in tableNames
 	QString name;
 	foreach( name, tableNames.keys())
 	{
-		tableComboBox->addItem(name);
+		if (tableComboBox->findText(name) < 0)	// -1 if not found
+			tableComboBox->addItem(name);
 	}
 
 	// add to configComboBox
@@ -151,12 +157,12 @@ void TableTab::updateConfigCopies(const QHash<QString, int>& tables, const QHash
 	}
 
 	// update 
-	this->updateTableChanged();
+	name = tableComboBox->currentText();
+	this->updateTableChanged(name);
 }
 
-void TableTab::updateTableChanged()
+void TableTab::updateTableChanged(const QString& name)
 {
-	QString name = tableComboBox->currentText();
 	// name is the id
 	Q_ASSERT(tableNames.contains(name));
 	int configNum = tableNames.value(name);
