@@ -38,6 +38,8 @@ class TableTab : public QWidget
 	private slots:
 		void updateTableChanged(const QString &);
 		void updateConnectionChanged(const QString &);
+		void saveConfigLocal();		// save to local tableNames and connectionConfigs
+		void saveConfigGlobal();	// save globally
 	private:
 		QHash<QString,int> tableNames;
 		QHash<int, QHash<QString, QString> > connectionConfigs;

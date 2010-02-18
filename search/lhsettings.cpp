@@ -71,7 +71,7 @@ TableTab::TableTab(QWidget *parent) : QWidget(parent)
 	tableComboBox->setMinimumWidth(150);	// because the text isn't setting the minimum for us
 
 	// TODO icons for pushbuttons
-	QPushButton *tableAddButton = new QPushButton(tr("Add"));
+	QPushButton *tableAddButton = new QPushButton(tr("New"));
 	QPushButton *tableDelButton = new QPushButton(tr("Delete"));
 	QLabel *tableLabel1 = new QLabel(tr("Table:"));
 
@@ -80,6 +80,7 @@ TableTab::TableTab(QWidget *parent) : QWidget(parent)
 	tableLayout->addWidget(tableComboBox);
 	tableLayout->addWidget(tableAddButton);
 	tableLayout->addWidget(tableDelButton);
+	tableLayout->addStretch();
 	tableGroup->setLayout(tableLayout);
 
 	// now the config group
@@ -87,13 +88,16 @@ TableTab::TableTab(QWidget *parent) : QWidget(parent)
 	// two layouts in VBox, top is HBox and bottom is Grid
 	configComboBox = new QComboBox;
 
-	QPushButton *configAddButton = new QPushButton(tr("Add"));
+	QPushButton *configSaveButton = new QPushButton(tr("Save"));
+	QPushButton *configAddButton = new QPushButton(tr("New"));
 	QPushButton *configDelButton = new QPushButton(tr("Delete"));
 	QLabel *configLabel1 = new QLabel(tr("Config:"));
+	connect(configSaveButton, SIGNAL(clicked()), this, SLOT(saveConfigLocal()));
 
 	QHBoxLayout *layout1 = new QHBoxLayout;
 	layout1->addWidget(configLabel1);
 	layout1->addWidget(configComboBox);
+	layout1->addWidget(configSaveButton);
 	layout1->addWidget(configAddButton);
 	layout1->addWidget(configDelButton);
 	layout1->addStretch();
@@ -206,4 +210,27 @@ void TableTab::updateConnectionChanged(const QString& name)
 	bool status;
 	this->setCurrentDb(connString.toInt(&status));
 	Q_ASSERT(status);
+}
+
+void TableTab::saveConfigLocal()
+{
+	// user requested that the current host, user, etc be saved to the current connection (identified by the combobox)
+	QString connName = configComboBox->currentText();
+	connName.replace(CONNECTION_PREFIX,"");
+	bool status;
+	int connId = connName.toInt(&status);
+	Q_ASSERT(status);
+
+	QHash<QString, QString> tempConfig;
+	tempConfig.insert("host",configDbHost->text());
+	tempConfig.insert("user",configDbUser->text());
+	tempConfig.insert("pass",configDbPass->text());
+	tempConfig.insert("db",configDbDb->text());
+
+	// assume QHash only allows one value per key
+	connectionConfigs.insert(connId,tempConfig);
+}
+
+void TableTab::saveConfigGlobal()
+{
 }
