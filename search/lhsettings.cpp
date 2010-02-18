@@ -132,8 +132,9 @@ TableTab::TableTab(QWidget *parent) : QWidget(parent)
 	// set the configs for the first time (before the connect(), because combobox->addItem triggers currentIndexChanged, and setCurrentDb()'s findText will not find it)
 	updateConfigCopies( LhGlobals::Instance().tableNames, LhGlobals::Instance().connectionConfigs);
 	// activated instead of currentIndexChanged because don't want to be notified if programmatically changed.  Though, activated can trigger even if no change, but probably no problems with that
-	connect(tableComboBox, SIGNAL(activated(const QString &)), this, SLOT(updateTableChanged(const QString &)));
-	connect(configComboBox, SIGNAL(activated(const QString &)), this, SLOT(updateConnectionChanged(const QString &)));
+	// change back to currentIndexChanged because I think I squashed the bug (clear())
+	connect(tableComboBox, SIGNAL(currentIndexChanged(const QString &)), this, SLOT(updateTableChanged(const QString &)));
+	connect(configComboBox, SIGNAL(currentIndexChanged(const QString &)), this, SLOT(updateConnectionChanged(const QString &)));
 	
 }
 
@@ -153,7 +154,7 @@ void TableTab::updateConfigCopies(const QHash<QString, int>& tables, const QHash
 	}
 
 	// add to configComboBox
-	configComboBox->clear();
+	//configComboBox->clear();
 	int configNum;
 	foreach( configNum, connectionConfigs.keys())
 	{
