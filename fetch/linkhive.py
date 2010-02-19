@@ -19,7 +19,7 @@
 import lh_reddit,lh_hackernews
 import ConfigParser
 from optparse import OptionParser
-import os.path, sys
+import os.path, sys, stat
 
 """ how I would like to use this program
 new reddituser1("username")
@@ -109,6 +109,9 @@ if __name__=="__main__":
 
 		with open(configFile, "w") as f:
 			config.write(f)
+
+		f.close()
+		os.chmod(configFile, stat.S_IRUSR | stat.S_IWUSR);		# u+rw
 
 		print "Blank %s file written" % configFile
 		sys.exit(0)
