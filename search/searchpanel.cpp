@@ -54,6 +54,18 @@ SearchPanel::SearchPanel(QWidget *parent) : QWidget(parent)
 	this->setLayout(mainLayout);
 }
 
+void SearchPanel::updateCurrentQuery(const QStringList& queryList)
+{
+	// connected to currentQueryChanged signal from ResultsView
+	// updates the lineedits from queryList
+
+	fieldText->setText(queryList.at(0));
+	tableText->setText(queryList.at(1));
+	// QPlainTextEdit
+	queryText->clear();
+	queryText->insertPlainText(queryList.at(2));
+}
+
 // slot
 void SearchPanel::searchClicked()
 {

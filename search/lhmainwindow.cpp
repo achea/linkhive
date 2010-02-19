@@ -51,8 +51,10 @@ void LhMainWindow::createUI()
 	splitter->setSizes(sizeList);
 
 	// how to declare signal and slot params
+	// update the filters for the current tab
 	connect(search1, SIGNAL(sendQuery(QStringList)), results1, SLOT(updateCurrentTabQuery(QStringList)));
-		// update the filters for the current tab
+	// on tab switch, update the search panel with the tab's query
+	connect(results1, SIGNAL(currentQueryChanged(const QStringList&)), search1, SLOT(updateCurrentQuery(const QStringList&)));
 
 	setCentralWidget(splitter);
 }

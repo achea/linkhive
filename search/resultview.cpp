@@ -1,21 +1,45 @@
 #include "resultview.h"
 #include "lhglobals.h"
 
-#include <QTableView>
+#include "lhtableview.h"
 #include <QSqlQueryModel>
 #include <QtGlobal>
+#include <QKeyEvent>
 
 ResultView::ResultView(QWidget *parent) : QTabWidget(parent)
+{
+	addBlankTab();
+	connect(this, SIGNAL(currentChanged(int)), this, SLOT(sendCurrentTabQuery(int)));
+}
+
+void ResultView::addBlankTab()
 {
 	// add a new tab with QTableView with nothing
 	QSqlQueryModel *model = new QSqlQueryModel;
 	// the text for the query defaults to boring count 
 	model->setQuery("SELECT COUNT(*) FROM reddit_stories", QSqlDatabase::database(LhGlobals::Instance().getConnNameFromTableName("reddit_stories")));
-	QTableView *tableView = new QTableView;
+	LhTableView *tableView = new LhTableView;
 	tableView->setModel(model);
 	tableView->setEditTriggers(QAbstractItemView::NoEditTriggers);
 
+	// add a list so as to not have it empty
+	QStringList list;
+	list << "COUNT(*)" << "reddit_stories" << "true";
+	tableView->saveQuery(list);
+
+	// TODO proper tab count
 	addTab(tableView,"search 1");
+}
+
+void ResultView::closeCurrentTab()
+{
+	// if only one tab, don't close
+	if (this->count() <= 1)
+		return;
+	LhTableView *tempView = static_cast<LhTableView*>(widget(this->currentIndex()));
+	this->removeTab(this->currentIndex());
+	// FIXME memory leak ?  does deleting this delete childs?
+	delete tempView;
 }
 
 void ResultView::updateCurrentTabQuery(QStringList queryList)
@@ -24,7 +48,7 @@ void ResultView::updateCurrentTabQuery(QStringList queryList)
 	
 	//QTableView *currentTableView = this
 	// why?  from http://doc.trolltech.com/4.5/itemviews-addressbook.html
-	QTableView *tempView = static_cast<QTableView*>(currentWidget());
+	LhTableView *tempView = static_cast<LhTableView*>(currentWidget());
 	
 	QItemSelectionModel *m = tempView->selectionModel();
 	QSqlQueryModel *model = new QSqlQueryModel;
@@ -41,6 +65,40 @@ void ResultView::updateCurrentTabQuery(QStringList queryList)
 
 	model->setQuery(query, QSqlDatabase::database(connName));
 	tempView->setModel(model);
+	tempView->saveQuery(queryList);
 	// when does QTableView know to recalc the display?
 	delete m;
+}
+
+void ResultView::sendCurrentTabQuery(int index)
+{
+	// TODO somehow to send blank QStringList if default "blank" tab
+	LhTableView *tempView = static_cast<LhTableView*>(widget(index));
+	QStringList tempList = tempView->getQuery();
+	emit currentQueryChanged(tempList);
+}
+
+void ResultView::keyPressEvent(QKeyEvent* e)
+{
+	//TODO how to properly call base class implementation
+	//TODO need to have buttons to close and open too
+	
+	// ctl-t for new tab, ctl-w to close tab
+	if (e->modifiers() == Qt::ControlModifier)
+	{
+		switch(e->key())
+		{
+			case Qt::Key_T:
+				addBlankTab();
+				break;
+			case Qt::Key_W:
+				closeCurrentTab();
+				break;
+			default:
+				QTabWidget::keyPressEvent(e);
+		}
+	} else
+	{
+		QTabWidget::keyPressEvent(e);
+	}
 }
