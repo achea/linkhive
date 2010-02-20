@@ -54,6 +54,38 @@ bool LhGlobals::readSettings()
 	return true;
 }
 
+bool LhGlobals::saveSettings()
+{
+	// TODO maybe private QSettings rather than two local ones?
+	QSettings settings(QSettings::IniFormat, QSettings::UserScope, LINKHIVE_NAME,"");
+
+	settings.beginGroup(SETTINGS_TABLE_GROUP);
+	QString name;
+	foreach(name, tableNames.keys())
+	{
+		settings.setValue(name,tableNames.value(name));
+	}
+	settings.endGroup();
+
+	settings.beginGroup(SETTINGS_CONFIG_GROUP);
+	int id;
+	QString idStr;
+	QHash<QString, QVariant> tempConfig;
+	foreach(id, connectionConfigs.keys())
+	{
+		tempConfig.clear();
+		foreach (idStr, connectionConfigs.value(id).keys())
+		{
+			tempConfig.insert(idStr, QVariant(connectionConfigs.value(id).value(idStr)));
+		}
+
+		settings.setValue(QString::number(id),QVariant(tempConfig));
+	}
+	settings.endGroup();
+	
+	return true;
+}
+
 bool LhGlobals::createConnections()
 {
 	bool status = true;		// default true

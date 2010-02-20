@@ -21,6 +21,7 @@ class LhGlobals
 		QHash<int,QString> connectionNames;				// configid : connname
 
 		bool readSettings();
+		bool saveSettings();
 		bool createConnections();
 		bool closeAllDbs();
 		QString getConnNameFromTableName(QString);
