@@ -1,23 +1,56 @@
 #include "lhglobals.h"
+#include "datatypes.h"
 
 #include <QString>
+#include <QStringList>
 //#include <QMessageBox>
 #include <QSqlDatabase>
 #include <QSqlError>
 #include <QSqlQuery>
 
+//#include <QtGlobal>
+#include <QSettings>
+
 bool LhGlobals::readSettings()
 {
-	tableNames.insert("reddit_stories",0);
-	tableNames.insert("hn_stories",0);
+	QSettings settings(QSettings::IniFormat, QSettings::UserScope, LINKHIVE_NAME,"");
 
-	QHash<QString,QString> temp;
-	temp.insert("host","localhost");
-	temp.insert("user","achea");
-	temp.insert("pass","asdf");
-	temp.insert("db","linkhive");
-	connectionConfigs.insert(0,temp);
+	tableNames.clear();
+	settings.beginGroup(SETTINGS_TABLE_GROUP);		
+	QString name;
+	int id;
+	foreach(name, settings.childKeys())		// childKeys() returns QStringList
+	{
+		// get the connection id associated with the table name
+		id = settings.value(name).toInt();		// QVariant to int
+		tableNames.insert(name,id);
+	}
+	settings.endGroup();
 
+	connectionConfigs.clear();
+	settings.beginGroup(SETTINGS_CONFIG_GROUP);
+	QString idStr;
+	bool status;
+	// TODO typedef
+	QHash<QString, QString> tempConfig;
+	QHash<QString, QVariant> temp1;
+	foreach(idStr, settings.childKeys())
+	{
+		// saved as QHash<QString, QVariant>
+		//    where QVariant is saved as QHash<QString, QVariant>
+		// want as QHash<int, QHash<QString, QString> >
+		temp1 = settings.value(idStr).toHash();		// now have inside QHash
+
+		tempConfig.clear();
+		foreach(name, temp1.keys())
+		{
+			tempConfig.insert(name, temp1.value(name).toString());
+		}
+		connectionConfigs.insert(idStr.toInt(&status),tempConfig);
+		Q_ASSERT(status);
+	}
+
+	// TODO error checking
 	return true;
 }
 
