@@ -225,7 +225,7 @@ class HNUser:
 			stuff3 = story_table.contents[1 + x*3].contents[1]
 
 			# odd case 2 (0 comments)
-			if stuff3.contents[4].string == "discuss":
+			if stuff3.contents[4].string == "discuss" or stuff3.contents[4].string == "":
 				num_comments = 0
 			else:
 				num_comments = int(stuff3.contents[4].string.split(" ")[0])
