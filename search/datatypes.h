@@ -10,5 +10,10 @@
 // for QSettings
 #define SETTINGS_TABLE_GROUP "tables"
 #define SETTINGS_CONFIG_GROUP "configs"
+#define SETTINGS_CONFIG_HOST "host"
+#define SETTINGS_CONFIG_USER "user"
+#define SETTINGS_CONFIG_PASS "pass"
+#define SETTINGS_CONFIG_DB "db"
+#define SETTINGS_CONFIG_TYPE "type"
 
 #endif

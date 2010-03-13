@@ -8,7 +8,7 @@
 #include <QSqlError>
 #include <QSqlQuery>
 
-//#include <QtGlobal>
+#include <QtDebug>
 #include <QSettings>
 
 bool LhGlobals::readSettings()
@@ -54,6 +54,65 @@ bool LhGlobals::readSettings()
 	return true;
 }
 
+bool LhGlobals::readSettings2()
+{
+	// read settings that are human-readable/writable
+	// saved indexes starts from 1 instead of 0
+	QSettings settings(QSettings::IniFormat, QSettings::UserScope, LINKHIVE_NAME,"");
+
+	QStringList strList = settings.childGroups();
+	if (!(strList.contains(SETTINGS_TABLE_GROUP) and strList.contains(SETTINGS_CONFIG_GROUP)))
+		return false;
+	tableNames.clear();
+	settings.beginGroup(SETTINGS_TABLE_GROUP);
+	QString name;
+	QVariant temp;
+	bool status;
+	int id;
+	foreach(name, settings.childKeys())
+	{
+		temp = settings.value(name);	// temp is a QVariant(QString)
+		//if (temp.type() != QVariant::Int)	// must be an int
+		//	return false;
+		// convert to int
+		id = temp.toInt(&status);
+		Q_ASSERT(status);
+		tableNames.insert(name,id);
+	}
+	settings.endGroup();
+
+	// we have already checked that SETTINGS_CONFIG_GROUP exists
+	connectionConfigs.clear();
+	/*settings.beginGroup(SETTINGS_CONFIG_GROUP);
+	QString idStr;
+
+	foreach(idStr, settings.childKeys())
+	{
+		// each id must have 
+
+	}*/
+
+	QHash<QString, QString> tempConfig;
+	int size = settings.beginReadArray(SETTINGS_CONFIG_GROUP);
+	for (id = 0; id < size; ++id)
+	{
+		// if one of these aren't here, createConnections will be the one to fail
+		settings.setArrayIndex(id);
+		tempConfig.clear();
+		tempConfig.insert(SETTINGS_CONFIG_HOST, settings.value(SETTINGS_CONFIG_HOST).toString());
+		tempConfig.insert(SETTINGS_CONFIG_USER, settings.value(SETTINGS_CONFIG_USER).toString());
+		tempConfig.insert(SETTINGS_CONFIG_PASS, settings.value(SETTINGS_CONFIG_PASS).toString());
+		tempConfig.insert(SETTINGS_CONFIG_DB, settings.value(SETTINGS_CONFIG_DB).toString());
+		tempConfig.insert(SETTINGS_CONFIG_TYPE, settings.value(SETTINGS_CONFIG_TYPE).toString());
+		connectionConfigs.insert(id+1, tempConfig);	// id starts from 1, not 0 (this is the only spot where this difference is noted)
+	}
+	settings.endArray();
+	//qDebug() << connectionConfigs;
+
+	// TODO error checking
+	return true;
+}
+
 bool LhGlobals::saveSettings()
 {
 	// TODO maybe private QSettings rather than two local ones?
@@ -84,6 +143,49 @@ bool LhGlobals::saveSettings()
 	settings.endGroup();
 	
 	return true;
+}
+
+bool LhGlobals::saveSettings2()
+{
+	// human-readable save-settings
+	this->sequentialize();
+	
+	QSettings settings(QSettings::IniFormat, QSettings::UserScope, LINKHIVE_NAME,"");
+
+	settings.beginGroup(SETTINGS_TABLE_GROUP);
+}
+
+bool LhGlobals::sequentialize()
+{
+	// in preparation for beginWriteArray
+	// each table config must start from 0 and sequence 1 by 1 to it's length
+	//   if it is missing, then change that value and copy the 
+	
+	QList<int> id_list = tableNames.values();		// get the values
+	qSort(id_list.begin(),id_list.end());			// sort ascending
+
+	int size = id_list.size();
+	int* id_count = new int[size];				// for frequency count
+
+	int x;
+	for (x = 0; x < size; x++)
+		id_count[x] = 0;
+	foreach(x, id_list)				// actual frequency count
+	{
+		id_count[x] = id_count[x]+1;
+	}
+
+	int unique_count = 0;
+	for (x = 0; x < size; x++)
+	{
+		if (id_count[x] > 0)			//if there is one
+		{
+			// for each key in tableNames with value x
+			//    add to a temp QHash with value unique_count
+			
+			unique_count++;
+		}
+	}
 }
 
 bool LhGlobals::createConnections()

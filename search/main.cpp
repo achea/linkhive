@@ -1,5 +1,5 @@
 #include <QApplication>
-#include <QtGlobal>
+#include <QtDebug>
 
 #include "lhglobals.h"
 #include "lhmainwindow.h"
@@ -8,7 +8,8 @@ int main(int argc, char **argv)
 {
 	QApplication app(argc, argv);
 
-	LhGlobals::Instance().readSettings();
+	if (!LhGlobals::Instance().readSettings2())
+		return 1;
 	if (!LhGlobals::Instance().createConnections())
 		return 1;
 

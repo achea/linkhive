@@ -20,8 +20,11 @@ class LhGlobals
 		QHash<int,QHash<QString,QString> > connectionConfigs;		// for each connection, there is host/user/pass/db
 		QHash<int,QString> connectionNames;				// configid : connname
 
-		bool readSettings();
-		bool saveSettings();
+		bool readSettings();		
+		bool readSettings2();		
+		bool saveSettings();		// stores everything as QVariants
+		bool saveSettings2();		// instead of QVariants, store QStrings with beginWriteArray()
+		bool sequentialize();		// to reduce config to ordered list from 1..n
 		bool createConnections();
 		bool closeAllDbs();
 		QString getConnNameFromTableName(QString);
