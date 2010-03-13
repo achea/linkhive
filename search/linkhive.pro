@@ -3,6 +3,7 @@
 ######################################################################
 
 TEMPLATE = app
+CONFIG += qt debug
 TARGET = 
 DEPENDPATH += .
 INCLUDEPATH += .
