@@ -1,6 +1,8 @@
 #include "lhglobals.h"
 #include "datatypes.h"
 
+#include <algorithm>
+
 #include <QString>
 #include <QStringList>
 //#include <QMessageBox>
@@ -104,7 +106,7 @@ bool LhGlobals::readSettings2()
 		tempConfig.insert(SETTINGS_CONFIG_PASS, settings.value(SETTINGS_CONFIG_PASS).toString());
 		tempConfig.insert(SETTINGS_CONFIG_DB, settings.value(SETTINGS_CONFIG_DB).toString());
 		tempConfig.insert(SETTINGS_CONFIG_TYPE, settings.value(SETTINGS_CONFIG_TYPE).toString());
-		connectionConfigs.insert(id+1, tempConfig);	// id starts from 1, not 0 (this is the only spot where this difference is noted)
+		connectionConfigs.insert(id, tempConfig);
 	}
 	settings.endArray();
 	//qDebug() << connectionConfigs;
@@ -153,6 +155,28 @@ bool LhGlobals::saveSettings2()
 	QSettings settings(QSettings::IniFormat, QSettings::UserScope, LINKHIVE_NAME,"");
 
 	settings.beginGroup(SETTINGS_TABLE_GROUP);
+	settings.remove("");		// remove all items in current group
+	QString name;
+	foreach(name, tableNames.keys())
+	{
+		settings.setValue(name,tableNames.value(name));
+	}
+	settings.endGroup();
+
+	settings.beginWriteArray(SETTINGS_CONFIG_GROUP);
+	settings.remove("");		// remove all items in current group (opened with beginWriteArray instead of beginGroup, but still works)
+	for (int id = 0; id < connectionConfigs.size(); ++id)		
+	{
+		settings.setArrayIndex(id);			// id = 0 is config 1
+		settings.setValue(SETTINGS_CONFIG_HOST, connectionConfigs.value(id).value(SETTINGS_CONFIG_HOST));
+		settings.setValue(SETTINGS_CONFIG_USER, connectionConfigs.value(id).value(SETTINGS_CONFIG_USER));
+		settings.setValue(SETTINGS_CONFIG_PASS, connectionConfigs.value(id).value(SETTINGS_CONFIG_PASS));
+		settings.setValue(SETTINGS_CONFIG_DB, connectionConfigs.value(id).value(SETTINGS_CONFIG_DB));
+		settings.setValue(SETTINGS_CONFIG_TYPE, connectionConfigs.value(id).value(SETTINGS_CONFIG_TYPE));
+	}
+	settings.endArray();
+
+	return true;
 }
 
 bool LhGlobals::sequentialize()
@@ -161,10 +185,18 @@ bool LhGlobals::sequentialize()
 	// each table config must start from 0 and sequence 1 by 1 to it's length
 	//   if it is missing, then change that value and copy the 
 	
+	// TODO typedef
+	QHash<QString,int> tempTableNames;
+	QHash<int,QHash<QString,QString> > tempConnectionConfigs;
+	tempTableNames.clear();
+	tempConnectionConfigs.clear();
+
 	QList<int> id_list = tableNames.values();		// get the values
 	qSort(id_list.begin(),id_list.end());			// sort ascending
 
-	int size = id_list.size();
+	int size1 = id_list.size();
+	int size = std::max(size1+1, id_list.last()+1);			// sorted, so last item is the largest
+												// add one for off-by-1 discrepancy
 	int* id_count = new int[size];				// for frequency count
 
 	int x;
@@ -175,7 +207,8 @@ bool LhGlobals::sequentialize()
 		id_count[x] = id_count[x]+1;
 	}
 
-	int unique_count = 0;
+	QString name;
+	int unique_count = 0;				
 	for (x = 0; x < size; x++)
 	{
 		if (id_count[x] > 0)			//if there is one
@@ -183,9 +216,38 @@ bool LhGlobals::sequentialize()
 			// for each key in tableNames with value x
 			//    add to a temp QHash with value unique_count
 			
+			QHash<QString, int>::const_iterator i = tableNames.constBegin();
+			while (i != tableNames.constEnd()) 
+			{
+				//cout << i.key() << ": " << i.value() << endl;
+				if (i.value() == x)
+				{
+					tempTableNames.insert(i.key(),unique_count);		// +1
+				}
+				++i;
+			}
+
+			// now the connectionConfigs
+			QHash<int,QHash<QString,QString> >::const_iterator j = connectionConfigs.constBegin();
+			while (j != connectionConfigs.constEnd())
+			{
+				if (j.key() == x)
+				{
+					tempConnectionConfigs.insert(unique_count, connectionConfigs.value(j.key()));
+				}
+				j++;
+			}
 			unique_count++;
 		}
 	}
+	//qDebug() << tableNames << endl << tempTableNames << endl << connectionConfigs << endl << tempConnectionConfigs;
+	tableNames = tempTableNames;
+	connectionConfigs = tempConnectionConfigs;
+
+	// FIXME connNames might be invalid
+	//   can close all and reopen all
+	//   or close and reopen only those that changed
+	return true;
 }
 
 bool LhGlobals::createConnections()
