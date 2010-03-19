@@ -115,12 +115,14 @@ class RedditUser:
 	ups						INT(11) UNSIGNED NOT NULL,
 	author					VARCHAR(21) CHARACTER SET utf8,
 	url						VARCHAR(2000) CHARACTER SET utf8,
+	permalink				VARCHAR(200) CHARACTER SET utf8,
 	media_embed_content		VARCHAR(2000) CHARACTER SET utf8,		 
 	media_embed_width		INT(11) UNSIGNED,
 	media_embed_scrolling	BOOL,
 	media_embed_height		INT(11) UNSIGNED,
 	media_video_id			VARCHAR(500) CHARACTER SET utf8,
 	media_type		VARCHAR(20) CHARACTER SET utf8,
+	media_deep		VARCHAR(2000) CHARACTER SET utf8,
 	downs			INT(11) UNSIGNED NOT NULL,
 	created			FLOAT UNSIGNED NOT NULL,
 	created_utc		FLOAT UNSIGNED NOT NULL,
@@ -330,6 +332,12 @@ class RedditUser:
 			query_values += "'%(media_video_id)s','%(media_type)s',"
 			story2['media_video_id'] = story['media']['video_id']
 			story2['media_type'] = story['media']['type']
+			if 'deep' in story['media']:
+				# this field looks like a copy of url field
+				# neat check if there is a video in the url 
+				query_cols += "media_deep,"
+				query_values += "'%(media_deep)s',"
+				story2['media_deep'] = story['media']['deep']
 
 		query_cols += "score,over_18,hidden,"
 		query_values += "%(score)d,%(over_18)s,%(hidden)s,"
@@ -338,8 +346,8 @@ class RedditUser:
 			query_cols += "thumbnail,"
 			query_values += "'%(thumbnail)s',"
 		
-		query_cols += "subreddit_id,subreddit,downs,name,created,url,title,created_utc,num_comments,ups) "
-		query_values += "'%(subreddit_id)s','%(subreddit)s',%(downs)d,'%(name)s',%(created).2f,'%(url)s','%(title)s',%(created_utc).2f,%(num_comments)d,%(ups)d) "
+		query_cols += "subreddit_id,subreddit,downs,permalink,name,created,url,title,created_utc,num_comments,ups) "
+		query_values += "'%(subreddit_id)s','%(subreddit)s',%(downs)d,'%(permalink)s','%(name)s',%(created).2f,'%(url)s','%(title)s',%(created_utc).2f,%(num_comments)d,%(ups)d) "
 
 		query = (self.query1_template % self.table_name) + query_cols + query_values + self.query2_template
 		
