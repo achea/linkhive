@@ -120,7 +120,7 @@ class RedditUser:
 	media_embed_width		INT(11) UNSIGNED,
 	media_embed_scrolling	BOOL,
 	media_embed_height		INT(11) UNSIGNED,
-	media_video_id			VARCHAR(500) CHARACTER SET utf8,
+	media_video_id			VARCHAR(600) CHARACTER SET utf8,
 	media_type		VARCHAR(20) CHARACTER SET utf8,
 	media_deep		VARCHAR(2000) CHARACTER SET utf8,
 	downs			INT(11) UNSIGNED NOT NULL,
