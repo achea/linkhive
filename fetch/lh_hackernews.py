@@ -39,7 +39,9 @@ class HNUser:
 		self.table_name = None
 		self.query1_template = "INSERT INTO %s "
 		# don't save if link became dead
-		self.query2_template = "(domain,score,link,url,title,author_href,author,comments,id) VALUES('%(domain)s',%(score)d,'%(link)s','%(url)s','%(title)s','%(author_href)s','%(author)s',%(comments)d,%(id)d) ON DUPLICATE KEY UPDATE score=VALUES(score), comments=VALUES(comments)"
+		self.query2_template = "(domain,score,link,url,title,author_href,author,comments,id) VALUES('%(domain)s',%(score)d,'%(link)s','%(url)s','%(title)s','%(author_href)s','%(author)s',%(comments)d,%(id)d) ON DUPLICATE KEY UPDATE score=VALUES(score), comments=CASE WHEN comments < VALUES(comments) THEN VALUES(comments) ELSE comments END"
+		# update comment count if current count is less than the new one
+		# http://stackoverflow.com/questions/1044874/conditional-on-duplicate-key-update
 
 	def __del__(self):
 		if self.db:
