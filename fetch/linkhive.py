@@ -183,7 +183,8 @@ if __name__=="__main__":
 			hackernews_fetch = int(options.hackernews_fetch)
 		except ValueError:
 			if options.hackernews_fetch == "all":
-				hackernews_fetch = 10
+				hackernews_fetch = 9999999
+					# current id is ~1,300,000, and supposing each id is a story and 30 stories per page, approx ~43,000 pages.  9,999,999 pages is 'future-safe'  
 			else:
 				# asserts handle the rest
 				hackernews_fetch = options.hackernews_fetch

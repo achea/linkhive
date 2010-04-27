@@ -146,7 +146,7 @@ class HNUser:
 		if isinstance(cache_type, int) and cache_type >= 1:
 			max_pages = cache_type - 1 	# because we already saved one
 		else:
-			max_pages = 999		# not really, won't get here 
+			max_pages = 9999999		# not really, won't get here 
 
 		# does python have do .. while ?
 		while ((len(story_table)-2) % 3) == 0 and count > 0 and page_count < max_pages:		# while exists a "More" link
