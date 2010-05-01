@@ -146,6 +146,7 @@ class RedditUser:
 	subreddit		VARCHAR(21) CHARACTER SET utf8,
 	selftext		MEDIUMTEXT CHARACTER SET utf8,
 	selftext_html	MEDIUMTEXT CHARACTER SET utf8,
+	is_self			BOOL,
 	likes			BOOL,
 	num_comments	INT(11) UNSIGNED NOT NULL,
 	id				VARCHAR(11) CHARACTER SET utf8,
@@ -308,6 +309,7 @@ class RedditUser:
 		story2 = story
 		# convert all bools to string
 		#media_embed_scrolling
+		story2['is_self'] = self.__bool2str(story['is_self'])
 		story2['likes'] = self.__bool2str(story['likes'])
 		story2['saved'] = self.__bool2str(story['saved'])
 		story2['clicked'] = self.__bool2str(story['clicked'])
@@ -339,8 +341,8 @@ class RedditUser:
 			story2['selftext_html'] = story['selftext_html'].replace('"', '\\"').replace("'", "\\'")
 			story2['selftext'] = story['selftext'].replace('"', '\\"').replace("'", "\\'")
 
-		query_cols += "likes,saved,id,clicked,author,"
-		query_values += "%(likes)s,%(saved)s,'%(id)s',%(clicked)s,'%(author)s',"
+		query_cols += "is_self,likes,saved,id,clicked,author,"
+		query_values += "%(is_self)s,%(likes)s,%(saved)s,'%(id)s',%(clicked)s,'%(author)s',"
 
 		if story['media'] is not None:		# assume it'll give None rather than {}
 			# later add check for {} as well
