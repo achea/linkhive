@@ -123,6 +123,22 @@ class RedditUser:
 	media_video_id			VARCHAR(600) CHARACTER SET utf8,
 	media_type		VARCHAR(20) CHARACTER SET utf8,
 	media_deep		VARCHAR(2000) CHARACTER SET utf8,
+	media_oembed_provider_url		VARCHAR(200) CHARACTER SET utf8,
+	media_oembed_provider_name		VARCHAR(21) CHARACTER SET utf8,
+	media_oembed_type				VARCHAR(21) CHARACTER SET utf8,
+	media_oembed_description		VARCHAR(400) CHARACTER SET utf8,
+	media_oembed_title				VARCHAR(400) CHARACTER SET utf8,
+	media_oembed_url				VARCHAR(2000) CHARACTER SET utf8,
+	media_oembed_author_name		VARCHAR(21)	CHARACTER SET utf8,
+	media_oembed_author_url			VARCHAR(60) CHARACTER SET utf8,
+	media_oembed_height				INT(11) UNSIGNED,
+	media_oembed_width				INT(11) UNSIGNED,
+	media_oembed_version			VARCHAR(11) CHARACTER SET utf8,
+	media_oembed_html				VARCHAR(2000) CHARACTER SET utf8,
+	media_oembed_html5				VARCHAR(2000) CHARACTER SET utf8,
+	media_oembed_thumbnail_width	INT(11) UNSIGNED,
+	media_oembed_thumbnail_height	INT(11) UNSIGNED,
+	media_oembed_thumbnail_url		VARCHAR(100) CHARACTER SET utf8,
 	downs			INT(11) UNSIGNED NOT NULL,
 	created			FLOAT UNSIGNED NOT NULL,
 	created_utc		FLOAT UNSIGNED NOT NULL,
@@ -300,6 +316,7 @@ class RedditUser:
 		# maybe delete some keys, like media_embed and media ... 
 		# because I can't get the dictionary/portable thing for execute to work, I'll convert manually...
 		# media_embed_content, selftext_html, selftext, url, title
+		# media_oembed_description,media_oembed_title
 		story2['url'] = story['url'].replace('"', '\\"').replace("'", "\\'")
 		story2['title'] = story['title'].replace('"', '\\"').replace("'", "\\'")
 
@@ -327,11 +344,46 @@ class RedditUser:
 
 		if story['media'] is not None:		# assume it'll give None rather than {}
 			# later add check for {} as well
-			# assume video_id and type
-			query_cols += "media_video_id,media_type,"
-			query_values += "'%(media_video_id)s','%(media_type)s',"
-			story2['media_video_id'] = story['media']['video_id']
+			if 'oembed' in story['media']:
+				query_cols +="media_oembed_provider_url,media_oembed_provider_name,media_oembed_type,media_oembed_title,media_oembed_url,media_oembed_height,media_oembed_width,media_oembed_version,media_oembed_html,media_oembed_thumbnail_width,media_oembed_thumbnail_height,media_oembed_thumbnail_url,"
+				query_values +="'%(media_oembed_provider_url)s','%(media_oembed_provider_name)s','%(media_oembed_type)s','%(media_oembed_title)s','%(media_oembed_url)s',%(media_oembed_height)d,%(media_oembed_width)d,'%(media_oembed_version)s','%(media_oembed_html)s',%(media_oembed_thumbnail_width)d,%(media_oembed_thumbnail_height)d,'%(media_oembed_thumbnail_url)s',"
+				story2['media_oembed_provider_url'] = story['media']['oembed']['provider_url']
+				story2['media_oembed_provider_name'] = story['media']['oembed']['provider_name']
+				story2['media_oembed_type'] = story['media']['oembed']['type']
+				story2['media_oembed_title'] = story['media']['oembed']['title'].replace('"', '\\"').replace("'", "\\'")
+				story2['media_oembed_url'] = story['media']['oembed']['url']
+				story2['media_oembed_height'] = story['media']['oembed']['height']
+				story2['media_oembed_width'] = story['media']['oembed']['width']
+				story2['media_oembed_version'] = story['media']['oembed']['version']
+				story2['media_oembed_html'] = story['media']['oembed']['html']
+				story2['media_oembed_thumbnail_width'] = story['media']['oembed']['thumbnail_width']
+				story2['media_oembed_thumbnail_height'] = story['media']['oembed']['thumbnail_height']
+				story2['media_oembed_thumbnail_url'] = story['media']['oembed']['thumbnail_url']
+
+				if 'description' in story['media']['oembed']:
+					query_cols += "media_oembed_description,"
+					query_values += "'%(media_oembed_description)s',"
+					story2['media_oembed_description'] = story['media']['oembed']['description'].replace('"', '\\"').replace("'", "\\'")
+				if 'author_name' in story['media']['oembed']:
+					# also assume author_url is provided there too
+					query_cols += "media_oembed_author_name,media_oembed_author_url,"
+					query_values += "'%(media_oembed_author_name)s','%(media_oembed_author_url)s',"
+					story2['media_oembed_author_name'] = story['media']['oembed']['author_name']
+					story2['media_oembed_author_url'] = story['media']['oembed']['author_url']
+				if 'html5' in story['media']['oembed']:		# TED
+					query_cols += "media_oembed_html5,"
+					query_values += "'%(media_oembed_html5)s',"
+					# the double quotes are already escaped, but there are unescaped single quotes inside the double ones (codec specifiers)
+					story2['media_oembed_html5'] = story['media']['oembed']['html5'].replace("'", "\\'")
+
+			query_cols += "media_type,"
+			query_values += "'%(media_type)s',"
 			story2['media_type'] = story['media']['type']
+			# oembed seems to have replaced video_id?
+			if 'video_id' in story['media']:
+				query_cols += "media_video_id,"
+				query_values += "'%(media_video_id)s',"
+				story2['media_video_id'] = story['media']['video_id']
 			if 'deep' in story['media']:
 				# this field looks like a copy of url field
 				# neat check if there is a video in the url 
