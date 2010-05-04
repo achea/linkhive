@@ -126,7 +126,7 @@ class RedditUser:
 	media_oembed_provider_url		VARCHAR(200) CHARACTER SET utf8,
 	media_oembed_provider_name		VARCHAR(21) CHARACTER SET utf8,
 	media_oembed_type				VARCHAR(21) CHARACTER SET utf8,
-	media_oembed_description		VARCHAR(400) CHARACTER SET utf8,
+	media_oembed_description		VARCHAR(2000) CHARACTER SET utf8,
 	media_oembed_title				VARCHAR(400) CHARACTER SET utf8,
 	media_oembed_url				VARCHAR(2000) CHARACTER SET utf8,
 	media_oembed_author_name		VARCHAR(21)	CHARACTER SET utf8,
