@@ -130,9 +130,10 @@ class RedditUser:
 	media_oembed_title				VARCHAR(400) CHARACTER SET utf8,
 	media_oembed_url				VARCHAR(2000) CHARACTER SET utf8,
 	media_oembed_author_name		VARCHAR(21)	CHARACTER SET utf8,
-	media_oembed_author_url			VARCHAR(60) CHARACTER SET utf8,
+	media_oembed_author_url			VARCHAR(100) CHARACTER SET utf8,
 	media_oembed_height				INT(11) UNSIGNED,
 	media_oembed_width				INT(11) UNSIGNED,
+	media_oembed_cacheage			INT(11) UNSIGNED,
 	media_oembed_version			VARCHAR(11) CHARACTER SET utf8,
 	media_oembed_html				VARCHAR(2000) CHARACTER SET utf8,
 	media_oembed_html5				VARCHAR(2000) CHARACTER SET utf8,
@@ -347,21 +348,28 @@ class RedditUser:
 		if story['media'] is not None:		# assume it'll give None rather than {}
 			# later add check for {} as well
 			if 'oembed' in story['media']:
-				query_cols +="media_oembed_provider_url,media_oembed_provider_name,media_oembed_type,media_oembed_title,media_oembed_url,media_oembed_height,media_oembed_width,media_oembed_version,media_oembed_html,media_oembed_thumbnail_width,media_oembed_thumbnail_height,media_oembed_thumbnail_url,"
-				query_values +="'%(media_oembed_provider_url)s','%(media_oembed_provider_name)s','%(media_oembed_type)s','%(media_oembed_title)s','%(media_oembed_url)s',%(media_oembed_height)d,%(media_oembed_width)d,'%(media_oembed_version)s','%(media_oembed_html)s',%(media_oembed_thumbnail_width)d,%(media_oembed_thumbnail_height)d,'%(media_oembed_thumbnail_url)s',"
+				query_cols +="media_oembed_provider_url,media_oembed_provider_name,media_oembed_type,media_oembed_title,media_oembed_url,media_oembed_version,media_oembed_html,media_oembed_thumbnail_width,media_oembed_thumbnail_height,media_oembed_thumbnail_url,"
+				query_values +="'%(media_oembed_provider_url)s','%(media_oembed_provider_name)s','%(media_oembed_type)s','%(media_oembed_title)s','%(media_oembed_url)s','%(media_oembed_version)s','%(media_oembed_html)s',%(media_oembed_thumbnail_width)d,%(media_oembed_thumbnail_height)d,'%(media_oembed_thumbnail_url)s',"
 				story2['media_oembed_provider_url'] = story['media']['oembed']['provider_url']
 				story2['media_oembed_provider_name'] = story['media']['oembed']['provider_name']
 				story2['media_oembed_type'] = story['media']['oembed']['type']
 				story2['media_oembed_title'] = story['media']['oembed']['title'].replace('"', '\\"').replace("'", "\\'")
 				story2['media_oembed_url'] = story['media']['oembed']['url']
-				story2['media_oembed_height'] = story['media']['oembed']['height']
-				story2['media_oembed_width'] = story['media']['oembed']['width']
 				story2['media_oembed_version'] = story['media']['oembed']['version']
 				story2['media_oembed_html'] = story['media']['oembed']['html']
 				story2['media_oembed_thumbnail_width'] = story['media']['oembed']['thumbnail_width']
 				story2['media_oembed_thumbnail_height'] = story['media']['oembed']['thumbnail_height']
 				story2['media_oembed_thumbnail_url'] = story['media']['oembed']['thumbnail_url']
 
+				if 'cacheage' in story['media']['oembed']:		# scribd doesn't have height
+					query_cols += "media_oembed_cacheage,"
+					query_values += "%(media_oembed_cacheage)s,"
+					story2['media_oembed_cacheage'] = story['media']['oembed']['cacheage']
+				if 'height' in story['media']['oembed']:
+					query_cols += "media_oembed_height,media_oembed_width,"
+					query_values += "%(media_oembed_height)s,%(media_oembed_width)s,"
+					story2['media_oembed_height'] = story['media']['oembed']['height']
+					story2['media_oembed_width'] = story['media']['oembed']['width']
 				if 'description' in story['media']['oembed']:
 					query_cols += "media_oembed_description,"
 					query_values += "'%(media_oembed_description)s',"
