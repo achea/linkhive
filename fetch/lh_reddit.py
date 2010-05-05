@@ -133,7 +133,7 @@ class RedditUser:
 	media_oembed_author_url			VARCHAR(100) CHARACTER SET utf8,
 	media_oembed_height				INT(11) UNSIGNED,
 	media_oembed_width				INT(11) UNSIGNED,
-	media_oembed_cacheage			INT(11) UNSIGNED,
+	media_oembed_cache_age			INT(11) UNSIGNED,
 	media_oembed_version			VARCHAR(11) CHARACTER SET utf8,
 	media_oembed_html				VARCHAR(2000) CHARACTER SET utf8,
 	media_oembed_html5				VARCHAR(2000) CHARACTER SET utf8,
@@ -361,10 +361,10 @@ class RedditUser:
 				story2['media_oembed_thumbnail_height'] = story['media']['oembed']['thumbnail_height']
 				story2['media_oembed_thumbnail_url'] = story['media']['oembed']['thumbnail_url']
 
-				if 'cacheage' in story['media']['oembed']:		# scribd doesn't have height
-					query_cols += "media_oembed_cacheage,"
-					query_values += "%(media_oembed_cacheage)s,"
-					story2['media_oembed_cacheage'] = story['media']['oembed']['cacheage']
+				if 'cache_age' in story['media']['oembed']:		# scribd doesn't have height
+					query_cols += "media_oembed_cache_age,"
+					query_values += "%(media_oembed_cache_age)s,"
+					story2['media_oembed_cache_age'] = story['media']['oembed']['cache_age']
 				if 'height' in story['media']['oembed']:
 					query_cols += "media_oembed_height,media_oembed_width,"
 					query_values += "%(media_oembed_height)s,%(media_oembed_width)s,"
