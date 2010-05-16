@@ -340,7 +340,8 @@ class RedditUser:
 			query_values += "'%(selftext_html)s','%(selftext)s',"
 
 			story2['selftext_html'] = story['selftext_html'].replace('"', '\\"').replace("'", "\\'")
-			story2['selftext'] = story['selftext'].replace('"', '\\"').replace("'", "\\'")
+			# replace \ first, before the quotes insert more of them
+			story2['selftext'] = story['selftext'].replace("\\", "\\\\").replace('"', '\\"').replace("'", "\\'")
 
 		query_cols += "is_self,likes,saved,id,clicked,author,"
 		query_values += "%(is_self)s,%(likes)s,%(saved)s,'%(id)s',%(clicked)s,'%(author)s',"
@@ -348,19 +349,19 @@ class RedditUser:
 		if story['media'] is not None:		# assume it'll give None rather than {}
 			# later add check for {} as well
 			if 'oembed' in story['media']:
-				query_cols +="media_oembed_provider_url,media_oembed_provider_name,media_oembed_type,media_oembed_title,media_oembed_url,media_oembed_version,media_oembed_html,media_oembed_thumbnail_width,media_oembed_thumbnail_height,media_oembed_thumbnail_url,"
-				query_values +="'%(media_oembed_provider_url)s','%(media_oembed_provider_name)s','%(media_oembed_type)s','%(media_oembed_title)s','%(media_oembed_url)s','%(media_oembed_version)s','%(media_oembed_html)s',%(media_oembed_thumbnail_width)d,%(media_oembed_thumbnail_height)d,'%(media_oembed_thumbnail_url)s',"
+				query_cols +="media_oembed_provider_url,media_oembed_provider_name,media_oembed_type,media_oembed_title,media_oembed_version,media_oembed_html,"
+				query_values +="'%(media_oembed_provider_url)s','%(media_oembed_provider_name)s','%(media_oembed_type)s','%(media_oembed_title)s','%(media_oembed_version)s','%(media_oembed_html)s',"
 				story2['media_oembed_provider_url'] = story['media']['oembed']['provider_url']
 				story2['media_oembed_provider_name'] = story['media']['oembed']['provider_name']
 				story2['media_oembed_type'] = story['media']['oembed']['type']
 				story2['media_oembed_title'] = story['media']['oembed']['title'].replace('"', '\\"').replace("'", "\\'")
-				story2['media_oembed_url'] = story['media']['oembed']['url']
 				story2['media_oembed_version'] = story['media']['oembed']['version']
 				story2['media_oembed_html'] = story['media']['oembed']['html']
-				story2['media_oembed_thumbnail_width'] = story['media']['oembed']['thumbnail_width']
-				story2['media_oembed_thumbnail_height'] = story['media']['oembed']['thumbnail_height']
-				story2['media_oembed_thumbnail_url'] = story['media']['oembed']['thumbnail_url']
 
+				if 'url' in story['media']['oembed']:		# blip.tv doesn't have url
+					query_cols += "media_oembed_url,"
+					query_values += "'%(media_oembed_url)s',"
+					story2['media_oembed_url'] = story['media']['oembed']['url']
 				if 'cache_age' in story['media']['oembed']:		# scribd doesn't have height
 					query_cols += "media_oembed_cache_age,"
 					query_values += "%(media_oembed_cache_age)s,"
@@ -385,6 +386,12 @@ class RedditUser:
 					query_values += "'%(media_oembed_html5)s',"
 					# the double quotes are already escaped, but there are unescaped single quotes inside the double ones (codec specifiers)
 					story2['media_oembed_html5'] = story['media']['oembed']['html5'].replace("'", "\\'")
+				if 'thumbnail_url' in story['media']['oembed']:		# blip.tv doesn't have url
+					query_cols += "media_oembed_thumbnail_width,media_oembed_thumbnail_height,media_oembed_thumbnail_url,"
+					query_values += "%(media_oembed_thumbnail_width)d,%(media_oembed_thumbnail_height)d,'%(media_oembed_thumbnail_url)s',"
+					story2['media_oembed_thumbnail_width'] = story['media']['oembed']['thumbnail_width']
+					story2['media_oembed_thumbnail_height'] = story['media']['oembed']['thumbnail_height']
+					story2['media_oembed_thumbnail_url'] = story['media']['oembed']['thumbnail_url']
 
 			query_cols += "media_type,"
 			query_values += "'%(media_type)s',"
