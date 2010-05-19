@@ -116,7 +116,7 @@ class RedditUser:
 	author					VARCHAR(21) CHARACTER SET utf8,
 	url						VARCHAR(2000) CHARACTER SET utf8,
 	permalink				VARCHAR(200) CHARACTER SET utf8,
-	media_embed_content		VARCHAR(2000) CHARACTER SET utf8,		 
+	media_embed_content		VARCHAR(6000) CHARACTER SET utf8,		 
 	media_embed_width		INT(11) UNSIGNED,
 	media_embed_scrolling	BOOL,
 	media_embed_height		INT(11) UNSIGNED,
