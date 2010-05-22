@@ -2,6 +2,7 @@
 #include "lhglobals.h"
 
 #include "lhtableview.h"
+#include "renderlinkdelegate.h"
 #include <QSqlQueryModel>
 #include <QtGlobal>
 #include <QKeyEvent>
@@ -19,6 +20,7 @@ void ResultView::addBlankTab()
 	// the text for the query defaults to boring count 
 	model->setQuery("SELECT COUNT(*) FROM reddit_stories", QSqlDatabase::database(LhGlobals::Instance().getConnNameFromTableName("reddit_stories")));
 	LhTableView *tableView = new LhTableView;
+	tableView->setItemDelegate(new RenderLinkDelegate);		// URL matcher
 	tableView->setModel(model);
 	tableView->setEditTriggers(QAbstractItemView::NoEditTriggers);
 
