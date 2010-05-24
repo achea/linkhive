@@ -1,6 +1,7 @@
 #include "renderlinkdelegate.h"
 
 #include "datatypes.h"		// For URL_REGEXP
+#include "lhglobals.h"
 #include <QString>
 #include <QWidget>
 #include <QPainter>
@@ -16,12 +17,24 @@ void RenderLinkDelegate::paint(QPainter *painter, const QStyleOptionViewItem &op
 {
 	// check if current item is string, then if URL regex
 	// http://stackoverflow.com/questions/2375763/how-to-open-an-url-in-a-qtableview
-	QString tempStr;
+	QString curStr;
+	bool isURL = false;
 	if (qVariantCanConvert<QString>(index.data()))
 	{
 		QRegExp rex(URL_REGEXP);
-		tempStr = index.data(Qt::DisplayRole).toString();
-		if (!tempStr.isEmpty() && rex.indexIn(tempStr) != -1)
+		curStr = index.data(Qt::DisplayRole).toString();
+		if (!curStr.isEmpty() && rex.indexIn(curStr) != -1)
+			isURL = true;
+
+		// also the custom URLs
+		foreach (QString tempStr, LhGlobals::Instance().extraURLs.keys())
+		{
+			rex.setPattern(tempStr);
+			if (rex.indexIn(curStr) != -1)
+				isURL = true;
+		}
+
+		if (isURL)
 		{
 			painter->save();
 
@@ -33,7 +46,7 @@ void RenderLinkDelegate::paint(QPainter *painter, const QStyleOptionViewItem &op
 				painter->setFont(font);
 				painter->setPen(option.palette.link().color());
 			}
-			painter->drawText(option.rect, Qt::AlignLeft | Qt::AlignVCenter, tempStr);
+			painter->drawText(option.rect, Qt::AlignLeft | Qt::AlignVCenter, curStr);
 
 			painter->restore();
 
