@@ -3,6 +3,7 @@
 // global to initialize databases, and read/write settings
 
 #include <QHash>
+#include <QMap>
 class QString;
 
 class LhGlobals
@@ -19,6 +20,7 @@ class LhGlobals
 		QHash<QString,int> tableNames;					// tablename : configid
 		QHash<int,QHash<QString,QString> > connectionConfigs;		// for each connection, there is host/user/pass/db
 		QHash<int,QString> connectionNames;				// configid : connname
+		QMap<QString,QString> extraURLs;				// contains regexps for URL rendering/linking
 
 		bool readSettings();		
 		bool readSettings2();		

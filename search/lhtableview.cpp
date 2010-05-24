@@ -1,5 +1,6 @@
 #include "lhtableview.h"
 #include "datatypes.h"
+#include "lhglobals.h"
 #include <QStringList>
 #include <QDesktopServices>
 #include <QUrl>
@@ -23,14 +24,26 @@ const QStringList& LhTableView::getQuery()
 
 void LhTableView::openIfURL(const QModelIndex &index)
 {
-	QString tempStr;
+	QMap<QString,QString> extraURLs = LhGlobals::Instance().extraURLs;
+
+	QString curStr;
 	if (qVariantCanConvert<QString>(index.data()))
 	{
 		QRegExp rex(URL_REGEXP);
-		tempStr = index.data(Qt::DisplayRole).toString();
-		if (!tempStr.isEmpty() && rex.indexIn(tempStr) != -1)
+		curStr = index.data(Qt::DisplayRole).toString();
+		if (!curStr.isEmpty() && rex.indexIn(curStr) != -1)
 		{
-			QDesktopServices::openUrl(QUrl(tempStr));
+			QDesktopServices::openUrl(QUrl(curStr));
+		}
+
+		// now the custom URL regexs
+		foreach (QString tempStr, extraURLs.keys())
+		{
+			rex.setPattern(tempStr);
+			if (rex.indexIn(curStr) != -1)
+			{
+				QDesktopServices::openUrl(QUrl(extraURLs.value(tempStr) + curStr));
+			}
 		}
 	}
 }

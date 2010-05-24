@@ -111,6 +111,13 @@ bool LhGlobals::readSettings2()
 	settings.endArray();
 	//qDebug() << connectionConfigs;
 
+	// now the extra URLs
+	//    for now hardcoded
+	
+	extraURLs.insert("^/r/.*/comments/.*/","http://www.reddit.com");
+	extraURLs.insert("^item\\?id=\\d*$","http://news.ycombinator.com/");
+	extraURLs.insert("^user\\?id=[\\w\\d]*$","http://news.ycombinator.com/");
+
 	// TODO error checking
 	return true;
 }
