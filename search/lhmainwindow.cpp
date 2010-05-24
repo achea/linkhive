@@ -2,6 +2,7 @@
 #include "lhsettings.h"
 #include "searchpanel.h"
 #include "resultview.h"
+#include "datatypes.h"
 
 #include <QSplitter>
 #include <QAction>
@@ -62,7 +63,14 @@ void LhMainWindow::createUI()
 // slots
 void LhMainWindow::about()
 {
-	QMessageBox::information(this, tr("About Linkhive"), tr("Linkhive v0.1 by Andree Chea released under the GPL license"));
+	QString aboutTitle = "About ";
+	aboutTitle.append(LINKHIVE_NAME);
+	QString aboutText = LINKHIVE_NAME;
+	aboutText.append(" v");
+	aboutText.append(LINKHIVE_VERSION);
+	aboutText.append(" by Andree Chea released under the GPL license");
+	// qPrintable() macro
+	QMessageBox::information(this, tr(aboutTitle.toLocal8Bit().constData()), tr(aboutText.toLocal8Bit().constData()));
 }
 
 void LhMainWindow::showSettings()

@@ -6,6 +6,7 @@
 #define CONNECTION_PREFIX "conn"
 
 #define LINKHIVE_NAME "Linkhive"
+#define LINKHIVE_VERSION "0.1"
 
 // for QSettings
 #define SETTINGS_TABLE_GROUP "tables"
