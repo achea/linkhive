@@ -5,6 +5,7 @@
 #include <QString>
 #include <QWidget>
 #include <QPainter>
+#include <QPalette>
 #include <QStyleOptionViewItem>
 #include <QModelIndex>
 #include <QRegExp>
@@ -38,13 +39,19 @@ void RenderLinkDelegate::paint(QPainter *painter, const QStyleOptionViewItem &op
 		{
 			painter->save();
 
+			QFont font = option.font;
+			font.setUnderline(true);
+			painter->setFont(font);
 			// state means once not that state, this stuff is not applied
-			if (option.state & QStyle::State_MouseOver)		
+			if (option.state & QStyle::State_MouseOver)			// MouseOver before HasFocus
 			{
-				QFont font = option.font;
-				font.setUnderline(true);
-				painter->setFont(font);
 				painter->setPen(option.palette.link().color());
+			}
+			else if (option.state & QStyle::State_HasFocus)		
+			{
+				// TODO what is the default 3D looking way to do this?
+				painter->fillRect(option.rect, option.palette.highlight());
+				painter->setPen(option.palette.highlightedText().color());
 			}
 			painter->drawText(option.rect, Qt::AlignLeft | Qt::AlignVCenter, curStr);
 
