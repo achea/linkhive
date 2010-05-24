@@ -2,14 +2,14 @@
 #define RESULTVIEW_H
 #include <QTabWidget>
 
-class QKeyEvent;
-
 class ResultView : public QTabWidget
 {
 	Q_OBJECT
 
 	public:
 		ResultView(QWidget *parent = 0);
+		void addBlankTab();			// not private since accessed by LhMainWindow
+		void closeCurrentTab();
 
 	signals:
 		void currentQueryChanged(const QStringList&);
@@ -21,13 +21,6 @@ class ResultView : public QTabWidget
 	private slots:
 		// given int from currentChanged(), then extract the QStringList and emit a currentQueryChanged signal
 		void sendCurrentTabQuery(int);
-
-	private:
-		void addBlankTab();
-		void closeCurrentTab();
-
-	protected:
-		void keyPressEvent(QKeyEvent*);
 
 };
 #endif

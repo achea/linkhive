@@ -6,6 +6,7 @@
 class SearchPanel;
 class ResultView;
 class LhSettings;
+class QKeyEvent;
 
 class LhMainWindow : public QMainWindow
 {
@@ -19,6 +20,9 @@ class LhMainWindow : public QMainWindow
 		//void close();		// already inherited
 		void about();
 		void showSettings();
+
+	protected:
+		void keyPressEvent(QKeyEvent*);
 	
 	private:
 		void createUI();

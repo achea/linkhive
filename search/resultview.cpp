@@ -5,7 +5,6 @@
 #include "renderlinkdelegate.h"
 #include <QSqlQueryModel>
 #include <QtGlobal>
-#include <QKeyEvent>
 
 ResultView::ResultView(QWidget *parent) : QTabWidget(parent)
 {
@@ -78,29 +77,4 @@ void ResultView::sendCurrentTabQuery(int index)
 	LhTableView *tempView = static_cast<LhTableView*>(widget(index));
 	QStringList tempList = tempView->getQuery();
 	emit currentQueryChanged(tempList);
-}
-
-void ResultView::keyPressEvent(QKeyEvent* e)
-{
-	//TODO how to properly call base class implementation
-	//TODO need to have buttons to close and open too
-	
-	// ctl-t for new tab, ctl-w to close tab
-	if (e->modifiers() == Qt::ControlModifier)
-	{
-		switch(e->key())
-		{
-			case Qt::Key_T:
-				addBlankTab();
-				break;
-			case Qt::Key_W:
-				closeCurrentTab();
-				break;
-			default:
-				QTabWidget::keyPressEvent(e);
-		}
-	} else
-	{
-		QTabWidget::keyPressEvent(e);
-	}
 }

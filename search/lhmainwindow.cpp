@@ -10,6 +10,7 @@
 #include <QMenuBar>
 #include <QMessageBox>
 #include <QList>
+#include <QKeyEvent>
 
 LhMainWindow::LhMainWindow(QWidget *parent) : QMainWindow(parent)
 {
@@ -77,4 +78,29 @@ void LhMainWindow::showSettings()
 {
 	settings1->exec();		// don't care about the return status?
 	return;
+}
+
+void LhMainWindow::keyPressEvent(QKeyEvent* e)
+{
+	//TODO how to properly call base class implementation
+	//TODO need to have buttons to close and open too
+	
+	// ctl-t for new tab, ctl-w to close tab
+	if (e->modifiers() == Qt::ControlModifier)
+	{
+		switch(e->key())
+		{
+			case Qt::Key_T:
+				results1->addBlankTab();
+				break;
+			case Qt::Key_W:
+				results1->closeCurrentTab();
+				break;
+			default:
+				QMainWindow::keyPressEvent(e);
+		}
+	} else
+	{
+		QMainWindow::keyPressEvent(e);
+	}
 }
