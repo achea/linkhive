@@ -264,7 +264,7 @@ class RedditUser:
 			data = link['data']
 
 			query_stuff = self.__format_mysql(data)
-			status = c.execute(query_stuff[0] % query_stuff[1])
+			status = c.execute(query_stuff[0], query_stuff[1])
 			if status == 0:
 				story_dupes += 1
 				# if an update happened, the status returns false??
@@ -308,124 +308,98 @@ class RedditUser:
 		# make a copy
 		# that means that story2 might have more than needed; it's ignored
 		story2 = story
-		# convert all bools to string
-		#media_embed_scrolling
-		story2['is_self'] = self.__bool2str(story['is_self'])
-		story2['likes'] = self.__bool2str(story['likes'])
-		story2['saved'] = self.__bool2str(story['saved'])
-		story2['clicked'] = self.__bool2str(story['clicked'])
-		story2['over_18'] = self.__bool2str(story['over_18'])
-		story2['hidden'] = self.__bool2str(story['hidden'])
-		# maybe delete some keys, like media_embed and media ... 
-		# because I can't get the dictionary/portable thing for execute to work, I'll convert manually...
-		# media_embed_content, selftext_html, selftext, url, title
-		# media_oembed_description,media_oembed_title
-		story2['url'] = story['url'].replace('"', '\\"').replace("'", "\\'")
-		story2['title'] = story['title'].replace('"', '\\"').replace("'", "\\'")
 
 		query_cols = "(domain,"
-		query_values = "VALUES('%(domain)s',"
+		query_values = "VALUES(%(domain)s,"
 		if story['media_embed'] != {}:
 			query_cols += "media_embed_content,media_embed_width,media_embed_scrolling,media_embed_height,"
-			query_values += "'%(media_embed_content)s',%(media_embed_width)d,%(media_embed_scrolling)s,%(media_embed_height)s,"
-			story2['media_embed_content'] = story['media_embed']['content'].replace('"', '\\"').replace("'", "\\'")
-
+			query_values += "%(media_embed_content)s,%(media_embed_width)s,%(media_embed_scrolling)s,%(media_embed_height)s,"
+			story2['media_embed_content'] = story['media_embed']['content']
 			story2['media_embed_width'] = story['media_embed']['width']
-			story2['media_embed_scrolling'] = self.__bool2str(story['media_embed']['scrolling'])
+			story2['media_embed_scrolling'] = story['media_embed']['scrolling']
 			story2['media_embed_height'] = story['media_embed']['height']
 
 		# it might be possible to have self post with no text, so assume that empty selftext has at least some html
 		if story['selftext_html'] is not None:
 			query_cols += "selftext_html,selftext,"
-			query_values += "'%(selftext_html)s','%(selftext)s',"
+			query_values += "%(selftext_html)s,%(selftext)s,"
 
-			story2['selftext_html'] = story['selftext_html'].replace('"', '\\"').replace("'", "\\'")
-			# replace \ first, before the quotes insert more of them
-			story2['selftext'] = story['selftext'].replace("\\", "\\\\").replace('"', '\\"').replace("'", "\\'")
+			# don't need to copy selftexts from story to story2 because story2 already has them
 
 		query_cols += "is_self,likes,saved,id,clicked,author,"
-		query_values += "%(is_self)s,%(likes)s,%(saved)s,'%(id)s',%(clicked)s,'%(author)s',"
+		query_values += "%(is_self)s,%(likes)s,%(saved)s,%(id)s,%(clicked)s,%(author)s,"
 
 		if story['media'] is not None:		# assume it'll give None rather than {}
 			# later add check for {} as well
 			if 'oembed' in story['media']:
 				query_cols +="media_oembed_provider_url,media_oembed_provider_name,media_oembed_type,media_oembed_title,media_oembed_version,media_oembed_html,"
-				query_values +="'%(media_oembed_provider_url)s','%(media_oembed_provider_name)s','%(media_oembed_type)s','%(media_oembed_title)s','%(media_oembed_version)s','%(media_oembed_html)s',"
+				query_values +="%(media_oembed_provider_url)s,%(media_oembed_provider_name)s,%(media_oembed_type)s,%(media_oembed_title)s,%(media_oembed_version)s,%(media_oembed_html)s,"
 				story2['media_oembed_provider_url'] = story['media']['oembed']['provider_url']
 				story2['media_oembed_provider_name'] = story['media']['oembed']['provider_name']
 				story2['media_oembed_type'] = story['media']['oembed']['type']
-				story2['media_oembed_title'] = story['media']['oembed']['title'].replace('"', '\\"').replace("'", "\\'")
+				story2['media_oembed_title'] = story['media']['oembed']['title']
 				story2['media_oembed_version'] = story['media']['oembed']['version']
 				story2['media_oembed_html'] = story['media']['oembed']['html']
 
 				if 'url' in story['media']['oembed']:		# blip.tv doesn't have url
 					query_cols += "media_oembed_url,"
-					query_values += "'%(media_oembed_url)s',"
+					query_values += "%(media_oembed_url)s,"
 					story2['media_oembed_url'] = story['media']['oembed']['url']
-				if 'cache_age' in story['media']['oembed']:		# scribd doesn't have height
+				if 'cache_age' in story['media']['oembed']:
 					query_cols += "media_oembed_cache_age,"
 					query_values += "%(media_oembed_cache_age)s,"
 					story2['media_oembed_cache_age'] = story['media']['oembed']['cache_age']
-				if 'height' in story['media']['oembed']:
+				if 'height' in story['media']['oembed']:		# scribd doesn't have height
 					query_cols += "media_oembed_height,media_oembed_width,"
 					query_values += "%(media_oembed_height)s,%(media_oembed_width)s,"
 					story2['media_oembed_height'] = story['media']['oembed']['height']
 					story2['media_oembed_width'] = story['media']['oembed']['width']
 				if 'description' in story['media']['oembed']:
 					query_cols += "media_oembed_description,"
-					query_values += "'%(media_oembed_description)s',"
-					story2['media_oembed_description'] = story['media']['oembed']['description'].replace('"', '\\"').replace("'", "\\'")
+					query_values += "%(media_oembed_description)s,"
+					story2['media_oembed_description'] = story['media']['oembed']['description']
 				if 'author_name' in story['media']['oembed']:
 					# also assume author_url is provided there too
 					query_cols += "media_oembed_author_name,media_oembed_author_url,"
-					query_values += "'%(media_oembed_author_name)s','%(media_oembed_author_url)s',"
+					query_values += "%(media_oembed_author_name)s,%(media_oembed_author_url)s,"
 					story2['media_oembed_author_name'] = story['media']['oembed']['author_name']
 					story2['media_oembed_author_url'] = story['media']['oembed']['author_url']
 				if 'html5' in story['media']['oembed']:		# TED
 					query_cols += "media_oembed_html5,"
-					query_values += "'%(media_oembed_html5)s',"
-					# the double quotes are already escaped, but there are unescaped single quotes inside the double ones (codec specifiers)
-					story2['media_oembed_html5'] = story['media']['oembed']['html5'].replace("'", "\\'")
+					query_values += "%(media_oembed_html5)s,"
+					story2['media_oembed_html5'] = story['media']['oembed']['html5']
 				if 'thumbnail_url' in story['media']['oembed']:		# blip.tv doesn't have url
 					query_cols += "media_oembed_thumbnail_width,media_oembed_thumbnail_height,media_oembed_thumbnail_url,"
-					query_values += "%(media_oembed_thumbnail_width)d,%(media_oembed_thumbnail_height)d,'%(media_oembed_thumbnail_url)s',"
+					query_values += "%(media_oembed_thumbnail_width)s,%(media_oembed_thumbnail_height)s,%(media_oembed_thumbnail_url)s,"
 					story2['media_oembed_thumbnail_width'] = story['media']['oembed']['thumbnail_width']
 					story2['media_oembed_thumbnail_height'] = story['media']['oembed']['thumbnail_height']
 					story2['media_oembed_thumbnail_url'] = story['media']['oembed']['thumbnail_url']
 
 			query_cols += "media_type,"
-			query_values += "'%(media_type)s',"
+			query_values += "%(media_type)s,"
 			story2['media_type'] = story['media']['type']
 			# oembed seems to have replaced video_id?
 			if 'video_id' in story['media']:
 				query_cols += "media_video_id,"
-				query_values += "'%(media_video_id)s',"
+				query_values += "%(media_video_id)s,"
 				story2['media_video_id'] = story['media']['video_id']
 			if 'deep' in story['media']:
 				# this field looks like a copy of url field
 				# neat check if there is a video in the url 
 				query_cols += "media_deep,"
-				query_values += "'%(media_deep)s',"
+				query_values += "%(media_deep)s,"
 				story2['media_deep'] = story['media']['deep']
 
 		query_cols += "score,over_18,hidden,"
-		query_values += "%(score)d,%(over_18)s,%(hidden)s,"
+		query_values += "%(score)s,%(over_18)s,%(hidden)s,"
 		
 		if story['thumbnail'] != '':
 			query_cols += "thumbnail,"
-			query_values += "'%(thumbnail)s',"
+			query_values += "%(thumbnail)s,"
 		
 		query_cols += "subreddit_id,subreddit,downs,permalink,name,created,url,title,created_utc,num_comments,ups) "
-		query_values += "'%(subreddit_id)s','%(subreddit)s',%(downs)d,'%(permalink)s','%(name)s',%(created).2f,'%(url)s','%(title)s',%(created_utc).2f,%(num_comments)d,%(ups)d) "
+		query_values += "%(subreddit_id)s,%(subreddit)s,%(downs)s,%(permalink)s,%(name)s,%(created)s,%(url)s,%(title)s,%(created_utc)s,%(num_comments)s,%(ups)s) "
 
 		query = (self.query1_template % self.table_name) + query_cols + query_values + self.query2_template
 		
 		return [query , story2]
-
-	def __bool2str(self,val):
-		"""Given a boolean, returns a cooresponding string (mysql-style)"""
-
-		# there's got to be a more pretty way to do this
-		if val:
-			return "true"
-		return "false"

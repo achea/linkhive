@@ -39,7 +39,7 @@ class HNUser:
 		self.table_name = None
 		self.query1_template = "INSERT INTO %s "
 		# don't save if link became dead
-		self.query2_template = "(domain,score,link,url,title,author_href,author,comments,id) VALUES('%(domain)s',%(score)d,'%(link)s','%(url)s','%(title)s','%(author_href)s','%(author)s',%(comments)d,%(id)d) ON DUPLICATE KEY UPDATE score=VALUES(score), comments=CASE WHEN comments < VALUES(comments) THEN VALUES(comments) ELSE comments END"
+		self.query2_template = "(domain,score,link,url,title,author_href,author,comments,id) VALUES(%(domain)s,%(score)s,%(link)s,%(url)s,%(title)s,%(author_href)s,%(author)s,%(comments)s,%(id)s) ON DUPLICATE KEY UPDATE score=VALUES(score), comments=CASE WHEN comments < VALUES(comments) THEN VALUES(comments) ELSE comments END"
 		# update comment count if current count is less than the new one
 		# http://stackoverflow.com/questions/1044874/conditional-on-duplicate-key-update
 
@@ -243,7 +243,7 @@ class HNUser:
 					'url':			stuff3.contents[4]['href'] }
 
 			query_stuff = self.__format_mysql(data)
-			status = c.execute(query_stuff[0] % query_stuff[1])
+			status = c.execute(query_stuff[0], query_stuff[1])
 			if status == 0:
 				story_dupes += 1
 			elif status == 2:
@@ -259,9 +259,7 @@ class HNUser:
 		"""Given a story dictionary, return query"""
 
 		# title and link need quotes escaping
-		story2 = story
-		story2['title'] = story['title'].replace('"', '\\"').replace("'", "\\'")
-		story2['link'] = story['link'].replace('"', '\\"').replace("'", "\\'")
+		#	done in db driver
 
 		query = (self.query1_template % self.table_name) + self.query2_template
-		return [query, story2]
+		return [query, story]
