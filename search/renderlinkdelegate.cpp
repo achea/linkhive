@@ -26,13 +26,15 @@ void RenderLinkDelegate::paint(QPainter *painter, const QStyleOptionViewItem &op
 		curStr = index.data(Qt::DisplayRole).toString();
 		if (!curStr.isEmpty() && rex.indexIn(curStr) != -1)
 			isURL = true;
-
-		// also the custom URLs
-		foreach (QString tempStr, LhGlobals::Instance().extraURLs.keys())
+		else 		// if already isURL, don't need to check custom ones
 		{
-			rex.setPattern(tempStr);
-			if (rex.indexIn(curStr) != -1)
-				isURL = true;
+			// also the custom URLs
+			foreach (QString tempStr, LhGlobals::Instance().extraURLs.keys())
+			{
+				rex.setPattern(tempStr);
+				if (rex.indexIn(curStr) != -1)
+					isURL = true;
+			}
 		}
 
 		if (isURL)
@@ -43,16 +45,17 @@ void RenderLinkDelegate::paint(QPainter *painter, const QStyleOptionViewItem &op
 			font.setUnderline(true);
 			painter->setFont(font);
 			// state means once not that state, this stuff is not applied
-			if (option.state & QStyle::State_MouseOver)			// MouseOver before HasFocus
+			if (option.state & QStyle::State_MouseOver)			// MouseOver before Selected
 			{
 				painter->setPen(option.palette.link().color());
 			}
-			else if (option.state & QStyle::State_HasFocus)		
+			else if (option.state & QStyle::State_Selected)		
 			{
 				// TODO what is the default 3D looking way to do this?
 				painter->fillRect(option.rect, option.palette.highlight());
 				painter->setPen(option.palette.highlightedText().color());
 			}
+			// TODO draw something for QStyle::State_HasFocus
 			painter->drawText(option.rect, Qt::AlignLeft | Qt::AlignVCenter, curStr);
 
 			painter->restore();
