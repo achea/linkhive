@@ -24,7 +24,7 @@ const QStringList& LhTableView::getQuery()
 
 void LhTableView::openIfURL(const QModelIndex &index)
 {
-	QMap<QString,QString> extraURLs = LhGlobals::Instance().extraURLs;
+	QHash<QString,QString> extraURLs = LhGlobals::Instance().extraURLs;
 
 	QString curStr;
 	if (qVariantCanConvert<QString>(index.data()))
