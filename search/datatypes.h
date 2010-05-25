@@ -17,6 +17,6 @@
 #define SETTINGS_CONFIG_DB "db"
 #define SETTINGS_CONFIG_TYPE "type"
 
-#define URL_REGEXP "https?://([-\\w\\.]+)+(:\\d+)?(/([\\w/_\\.]*(\\?\\S+)?)?)?"
+#define URL_REGEXP "^https?://([-\\w\\.]+)+(:\\d+)?(/([\\w/_\\.]*(\\?\\S+)?)?)?"
 
 #endif
