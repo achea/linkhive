@@ -86,7 +86,7 @@ void LhMainWindow::keyPressEvent(QKeyEvent* e)
 	//TODO need to have buttons to close and open too
 	
 	// ctl-t for new tab, ctl-w to close tab
-	if (e->modifiers() == Qt::ControlModifier)
+	if ((e->modifiers() & Qt::ControlModifier))		// to allow other KeyboardModifiers
 	{
 		switch(e->key())
 		{
@@ -95,6 +95,12 @@ void LhMainWindow::keyPressEvent(QKeyEvent* e)
 				break;
 			case Qt::Key_W:
 				results1->closeCurrentTab();
+				break;
+			case Qt::Key_Tab:
+				results1->selectTab(1);			// move right 1
+				break;
+			case Qt::Key_Backtab:
+				results1->selectTab(-1);		// move left 1
 				break;
 			default:
 				QMainWindow::keyPressEvent(e);

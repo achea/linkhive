@@ -43,6 +43,27 @@ void ResultView::closeCurrentTab()
 	delete tempView;
 }
 
+void ResultView::selectTab(int direction)
+{
+	// move left or right
+	// TODO enum
+	Q_ASSERT(direction == -1 || direction == 1);
+
+	int curIndex = this->currentIndex();
+	int newIndex;
+	if (curIndex < 0)		// -1 for no widgets
+		return;
+	curIndex += direction;
+	if (curIndex < 0)
+		newIndex = this->count() - 1;
+	else if (curIndex > this->count() - 1)
+		newIndex = 0;
+	else
+		newIndex = curIndex;
+		
+	this->setCurrentIndex(newIndex);
+}
+
 void ResultView::updateCurrentTabQuery(QStringList queryList)
 {
 	// delete the old model and replace with new model

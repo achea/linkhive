@@ -8,8 +8,6 @@ class ResultView : public QTabWidget
 
 	public:
 		ResultView(QWidget *parent = 0);
-		void addBlankTab();			// not private since accessed by LhMainWindow
-		void closeCurrentTab();
 
 	signals:
 		void currentQueryChanged(const QStringList&);
@@ -17,6 +15,9 @@ class ResultView : public QTabWidget
 	public slots:
 		/// given QStringList from SearchPanel, update the current tab
 		void updateCurrentTabQuery(QStringList);
+		void addBlankTab();			// not private since accessed by LhMainWindow
+		void closeCurrentTab();
+		void selectTab(int);			// -1 for left, 1 for right
 
 	private slots:
 		// given int from currentChanged(), then extract the QStringList and emit a currentQueryChanged signal
