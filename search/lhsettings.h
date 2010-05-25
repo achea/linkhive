@@ -54,4 +54,16 @@ class TableTab : public QWidget
 
 		void setCurrentDb(int);			// updates display
 };
+
+class RegexTab : public QWidget
+{
+	Q_OBJECT
+
+	public:
+		RegexTab(QWidget *parent = 0);
+
+	private:
+		QHash<QString,QString> extraURLs;
+
+};
 #endif

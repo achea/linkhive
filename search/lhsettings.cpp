@@ -23,6 +23,7 @@ LhSettings::LhSettings(QWidget *parent) : QDialog(parent)
 {
 	tabWidget = new QTabWidget;
 	tabWidget->addTab(new TableTab(), tr("Tables"));
+	tabWidget->addTab(new RegexTab(), tr("URL Regexs"));
 
 	QDialogButtonBox *buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
 
@@ -238,4 +239,36 @@ void TableTab::saveConfigLocal()
 
 void TableTab::saveConfigGlobal()
 {
+}
+
+/** RegexTab **/
+RegexTab::RegexTab(QWidget *parent) : QWidget(parent)
+{
+	// currently readonly, so just sets it up once
+	// later, have updating by resetting, then create rexList again from scratch
+	QGroupBox *regexGroup = new QGroupBox(tr("URL Regular Expressions"));
+	this->extraURLs = LhGlobals::Instance().extraURLs;
+
+	QVBoxLayout *rexList = new QVBoxLayout;
+	foreach (QString tempStr, extraURLs.keys())
+	{
+		QHBoxLayout *rexListElem = new QHBoxLayout;
+		QLineEdit *aRegex = new QLineEdit(tempStr);
+		QLineEdit *urlPrefix = new QLineEdit(extraURLs.value(tempStr));
+		aRegex->setReadOnly(true);
+		urlPrefix->setReadOnly(true);
+		rexListElem->addWidget(aRegex);
+		rexListElem->addWidget(urlPrefix);
+		
+		// add to VBoxLayout
+		rexList->addLayout(rexListElem);
+	}
+	regexGroup->setLayout(rexList);
+
+	// main layout
+	QVBoxLayout *mainLayout = new QVBoxLayout;
+	mainLayout->addWidget(regexGroup);
+	mainLayout->addStretch();
+	setLayout(mainLayout);
+	// only for display purposes for now
 }
