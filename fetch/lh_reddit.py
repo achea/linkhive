@@ -109,7 +109,7 @@ class RedditUser:
 		query = "CREATE TABLE IF NOT EXISTS " + table_name + """
 (
 	kind					VARCHAR(3) CHARACTER SET utf8,
-	domain					VARCHAR(60) CHARACTER SET utf8,
+	domain					VARCHAR(70) CHARACTER SET utf8,
 	clicked					BOOL,
 	name					VARCHAR(11) CHARACTER SET utf8,
 	ups						INT(11) UNSIGNED NOT NULL,
