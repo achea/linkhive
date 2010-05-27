@@ -53,7 +53,7 @@ Condensed usage is as follows, but you can always pass the --help option for the
 
 ./linkhive.py [--reddit [--reddit-fetch=(update|all)] [--reddit-page=(liked|saved|disliked|hidden)]] [--hackernews [--hackernews-fetch=(update|all|xx)]] [--quiet]
 
-Fetching defaults to 'update' for both reddit and Hacker News, which means keep fetching until there is approximately two full pages of duplicates.  For Hacker News, you can specify 'xx' number of pages to fetch with the --hackernews-fetch option - just know that the limit is 7 pages of 30.  Specifying 'all' will get all these pages.  At the moment, you can not specify the number of pages to fetch for reddit.
+Fetching defaults to 'update' for both reddit and Hacker News, which means keep fetching until there is approximately two full pages of duplicates.  For Hacker News, you can specify 'xx' number of pages to fetch with the --hackernews-fetch option.  Specifying 'all' will get all these pages.  At the moment, you can not specify the number of pages to fetch for reddit.
 
 The reddit page defaults to liked stories, which you can change with the --reddit-page option.
 
@@ -65,7 +65,7 @@ Notes
 
 * Hacker News dates are given mostly in "hours ago", so an accurate date isn't possible (though I could get close +- 1 hour).  If it was more than a day old, then accuracy is only by day.  This program ignores dates for now.
 
-* A fetch for a user's complete history is currently impossible as the sites don't reveal them (reddit goes back 1000 stories, and Hacker News goes back 210 stories).
+* A fetch for a reddit user's complete history is currently impossible as reddit doesn't reveal them (reddit goes back 1000 stories).  You can with Hacker News, though.
 
 * If some fields were not present (e.g. reddit's selftext fields), the value is NULL by default.
 
@@ -74,6 +74,7 @@ Notes
 Todo
 ====
 * Rewrite Hacker News scraping to be more easily adjustable in the future
+* Systray App
 
 Credits
 =======
