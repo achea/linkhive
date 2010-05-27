@@ -3,3 +3,4 @@ Linkhive is to be somewhat of a social news/bookmarks manager.
 Contents:
 	fetch/ contains code that can currently archive user history from reddit and Hacker News.
 	fetch/old/ contains code merely for historical reasons 
+	search/ contains code that can perform SQL SELECT queries on databases.

@@ -1,0 +1,85 @@
+Linkhive Search v0.1 by Andree Chea
+
+Linkhive Search is a C++/Qt program to search through tables in MySQL databases.
+
+Software requirements
+=====================
+A minimum of Qt 4.4, and its development environment.
+
+Setup
+=====
+There currently isn't an install system, so the code needs to be compiled manually.
+
+Run 'qmake' to generate a Makefile from linkhive.pro, then 'make' to build the program with automake, then './linkhive' to run it.  Some debugging is enabled; to disable it, remove the debug keyword from the CONFIG environment variable in linkhive.pro, then run 'qmake' again.  The main case where it'll be a problem is if you type a table name that you haven't configured yet.  Otherwise, it should be fine to leave it in.
+
+Linkhive Search needs to know the databases available.  Though there is a menu option, you currently can't use it to add new configs; they must be created by hand.  Create a file Linkhive.ini with the following (assuming you used the fetcher's database/table defaults):
+
+[tables]
+reddit_stories=0
+hn_stories=0
+
+[configs]
+size=1
+1\host=localhost
+1\user=yourmysqluserhere
+1\pass=yourmysqlpasshere
+1\db=linkhive
+1\type=mysql
+
+and save it in one of the following places (case-sensitive):
+
+Linux/OSX:
+$HOME/.config/Linkhive.ini
+
+Windows:
+%APPDATA%\Linkhive.ini
+
+From the QSettings documentation ( http://doc.qt.nokia.com/4.6/qsettings.html#platform-specific-notes ), "the %APPDATA% path is usually C:\Documents and Settings\User Name\Application Data".
+
+Since Linkhive Search is a generic MySQL search program, it can search through any database.  So if you have a different database with links, like for example those from del.icio.us saved with MySQLicious ( http://code.google.com/p/mysqlicious/ ), you can add it to Linkhive.ini and Linkhive Search will accept it.  The new Linkhive.ini might then look something like this:
+
+[tables]
+reddit_stories=0
+hn_stories=0
+delicious=1
+
+[configs]
+size=2
+1\host=localhost
+1\user=yourmysqluserhere
+1\pass=yourmysqlpasshere
+1\db=linkhive
+1\type=mysql
+2\host=localhost
+2\user=yourdeliciousmysqluserhere
+2\pass=yourdeliciousmysqlpasshere
+2\db=delicious
+2\type=mysql
+
+Usage
+=====
+There are two main sections of the program.  The left sidebar is where you type in a query, and the right is where the results of the query are shown.  
+
+Keyboard shortcuts
+* Ctrl+T for new tab
+* Ctrl+W to close tab
+* Ctrl+Tab to select tab to right
+* Ctrl+Shift+Tab to select tab to left
+
+URLs are underlined and you can click them with your mouse or press enter to open it in the default browser.
+
+Nothing in the Settings dialog works for saving at the moment, only viewing.
+
+Future
+======
+Though this is my first Qt app, I'm not sure if a desktop app is the best for searching, and soon, categorizing.  For one, it requires Qt to be installed.  One benefit of making this web-based is that the URLs can be marked visited by the browser history.  In any case, this program will most likely be scrapped and rewritten.
+
+License
+=======
+Copyright (C) 2009-2010 Andree Chea <achea89@gmail.com>
+
+Linkhive is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 2 of the License, or (at your option) any later version.
+
+Linkhive is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with Linkhive.  If not, see <http://www.gnu.org/licenses/>.
