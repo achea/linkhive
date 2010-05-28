@@ -271,13 +271,17 @@ bool LhGlobals::createConnections()
 		connName.append(QString::number(key));
 		temp = this->connectionConfigs.value(key);
 
-		db = QSqlDatabase::addDatabase("QMYSQL",connName);
+		QString sqlDriver = (temp.value("type") == "mysql" ? "QMYSQL" : "QSQLITE" );
+		db = QSqlDatabase::addDatabase(sqlDriver,connName);
 			// if connName is already opened, Qt will close it for us before opening it again
 		//db.setDatabaseName(":memory:");
-		db.setHostName(temp.value("host"));
 		db.setDatabaseName(temp.value("db"));
-		db.setUserName(temp.value("user"));
-		db.setPassword(temp.value("pass"));
+		if (temp.value("type") == "mysql")
+		{
+			db.setHostName(temp.value("host"));
+			db.setUserName(temp.value("user"));
+			db.setPassword(temp.value("pass"));
+		}
 		if (!db.open())
 		{
 			status = false;
