@@ -18,7 +18,11 @@
 #    along with Linkhive.  If not, see <http://www.gnu.org/licenses/>.
 
 import urllib, urllib2, cookielib
-import MySQLdb
+try:
+	import MySQLdb
+	import sqlite3
+except ImportError:
+	pass			# TODO check for MySQLdb loaded
 
 import sys
 import json
@@ -45,6 +49,7 @@ class RedditUser:
 		#self.dbOK = False
 		self.db = None			#none for now (I think must be instantiated in __init__)
 								# not necessarily, but then what is it's default value?
+		self.type = None		# sqlite or mysql
 
 		self.cj = None
 		self.opener = None
@@ -65,6 +70,7 @@ class RedditUser:
 
 	def __del__(self):
 		if self.db:
+			self.db.commit()		# maybe rollback...
 			self.db.close()
 
 	#def getUserName(self):
@@ -92,21 +98,26 @@ class RedditUser:
 		#globally add user agent
 		self.opener.addheaders = [('User-Agent', 'linkhive/0.1')]
 	
-	def initdb(self,host='localhost',user=None,passwd=None,db_name='linkhive',table_name="reddit_stories"):
+	def initdb(self,type='sqlite', host='localhost',user=None,passwd=None,db_name='linkhive',table_name="reddit_stories"):
 		"""Open a connection to the database"""
 
 		#reddit_table_name = "reddit_stories"
 		self.table_name = table_name
+		self.type = type
 
 		# if successful, store the state
-		self.db = MySQLdb.connect(host=host, user=user, passwd=passwd, db=db_name, sql_mode='STRICT_ALL_TABLES')
+		if type == "mysql":
+			self.db = MySQLdb.connect(host=host, user=user, passwd=passwd, db=db_name, sql_mode='STRICT_ALL_TABLES')
 			# connect returns true even if unsuccessful according to manual?
 			# TODO check if it connected
+		else:		# sqlite
+			self.db = sqlite3.connect(db_name + ".db",timeout=10)
 
 		c = self.db.cursor()		# local cursor?
 		# media_embed_content was upgraded from 500 to 2000 because of one that was ~1600...
 		# media_video_id was upgraded from 20 to 500 because of one that was ~460
-		query = "CREATE TABLE IF NOT EXISTS " + table_name + """
+		if type == "mysql":
+			query = "CREATE TABLE IF NOT EXISTS " + table_name + """
 (
 	kind					VARCHAR(3) CHARACTER SET utf8,
 	domain					VARCHAR(70) CHARACTER SET utf8,
@@ -160,7 +171,64 @@ class RedditUser:
 	PRIMARY KEY		(id)
 );
 """
+		else:
+			query = "CREATE TABLE IF NOT EXISTS " + table_name + """
+(
+	kind					VARCHAR(3),
+	domain					VARCHAR(70),
+	clicked					TINYINT(1),
+	name					VARCHAR(11),
+	ups						UNSIGNED INT(11) NOT NULL,
+	author					VARCHAR(21),
+	url						VARCHAR(2000),
+	permalink				VARCHAR(200),
+	media_embed_content		TEXT,		 
+	media_embed_width		UNSIGNED INT(11),
+	media_embed_scrolling	TINYINT(1),
+	media_embed_height		UNSIGNED INT(11),
+	media_video_id			VARCHAR(600),
+	media_type		VARCHAR(20),
+	media_deep		VARCHAR(2000),
+	media_oembed_provider_url		VARCHAR(200),
+	media_oembed_provider_name		VARCHAR(21),
+	media_oembed_type				VARCHAR(21),
+	media_oembed_description		TEXT,
+	media_oembed_title				VARCHAR(400),
+	media_oembed_url				VARCHAR(2000),
+	media_oembed_author_name		VARCHAR(21),
+	media_oembed_author_url			VARCHAR(100),
+	media_oembed_height				UNSIGNED INT(11),
+	media_oembed_width				UNSIGNED INT(11),
+	media_oembed_cache_age			UNSIGNED INT(11),
+	media_oembed_version			VARCHAR(11),
+	media_oembed_html				TEXT,
+	media_oembed_html5				VARCHAR(2000),
+	media_oembed_thumbnail_width	UNSIGNED INT(11),
+	media_oembed_thumbnail_height	UNSIGNED INT(11),
+	media_oembed_thumbnail_url		VARCHAR(100),
+	downs			UNSIGNED INT(11) NOT NULL,
+	created			UNSIGNED FLOAT NOT NULL,
+	created_utc		UNSIGNED FLOAT NOT NULL,
+	subreddit_id	VARCHAR(11),
+	subreddit		VARCHAR(31),
+	selftext		MEDIUMTEXT,
+	selftext_html	MEDIUMTEXT,
+	is_self			TINYINT(1),
+	likes			TINYINT(1),
+	num_comments	UNSIGNED INT(11) NOT NULL,
+	id				VARCHAR(11),
+	title			VARCHAR(400),
+	hidden			TINYINT(1),
+	over_18			TINYINT(1),
+	score			INT(11) NOT NULL,
+	saved			TINYINT(1),
+	thumbnail		VARCHAR(60),
+	PRIMARY KEY		(id)
+);
+"""
+
 		c.execute(query)
+		self.db.commit()
 
 	def get_links(self,sourceurl, requests = 0):
 		'''
@@ -263,31 +331,50 @@ class RedditUser:
 
 			data = link['data']
 
-			query_stuff = self.__format_mysql(data)
-			status = c.execute(query_stuff[0], query_stuff[1])
-			if status == 0:
-				story_dupes += 1
-				# if an update happened, the status returns false??
-				#	does that mean that it updated, or is it a bug and should've returned true?
-				#print "Did not save '" + data['title'] + "'"
-				#print dir(status)
-				#print query_stuff[0] % query_stuff[1]
-				#print status
-				#print c.messages
-			elif status == 2:
-				story_updates += 1
-			elif status == 1:
-				story_new += 1
+			query_stuff = self.__format_sql(data)
+			if self.type == "mysql":
+				status = c.execute(query_stuff[0], query_stuff[1])
+				if status == 0:
+					story_dupes += 1
+					# if an update happened, the status returns false??
+					#	does that mean that it updated, or is it a bug and should've returned true?
+					#print "Did not save '" + data['title'] + "'"
+					#print dir(status)
+					#print query_stuff[0] % query_stuff[1]
+					#print status
+					#print c.messages
+				elif status == 2:
+					story_updates += 1
+				elif status == 1:
+					story_new += 1
+				else:
+					print "how to die?"
 			else:
-				print "how to die?"
+				# what does status mean???
+				try:
+					status = c.execute(query_stuff[0],query_stuff[1])
+					story_new += 1
+				except sqlite3.IntegrityError:
+					# check if values differ for dupes check
+					c.execute("SELECT clicked,ups,downs,likes,num_comments,hidden,score,saved,selftext,selftext_html FROM " + self.table_name + " WHERE id = :id",query_stuff[1])
+					row = c.fetchone()			# assume only one 
+
+					if (row[0] != query_stuff[1]['clicked'] or row[1] != query_stuff[1]['ups'] or row[2] != query_stuff[1]['downs'] or row[3] != query_stuff[1]['likes'] or row[4] != query_stuff[1]['num_comments'] or row[5] != query_stuff[1]['hidden'] or row[6] != query_stuff[1]['score'] or row[7] != query_stuff[1]['saved'] or row[8] != query_stuff[1]['selftext'] or row[9] != query_stuff[1]['selftext_html']):
+						story_updates += 1
+						query = "UPDATE " + self.table_name + " SET clicked=:clicked, ups=:ups, downs=:downs, likes=:likes, num_comments=:num_comments, hidden=:hidden, score=:score, saved=:saved, selftext=:selftext, selftext_html=:selftext_html WHERE id = :id "
+						status = c.execute(query,query_stuff[1])
+					else:
+						story_dupes += 1
+
 
 			if story_dupes >= 200 and cache_type == "update":		# if more than 2 full pages
 				break;
 
+		self.db.commit()
 		if self.quietness < 2:
 			print "Saved " + str(story_new) + " new stories with " + str(story_updates) + " updated stories and " + str(story_dupes) + " duplicate, but not updated stories."
 
-	def __format_mysql(self,story):
+	def __format_sql(self,story):
 		"""Given a story dictionary, format the appropriate SQL"""
 		
 		# must have called initdb first
@@ -400,6 +487,17 @@ class RedditUser:
 		query_cols += "subreddit_id,subreddit,downs,permalink,name,created,url,title,created_utc,num_comments,ups) "
 		query_values += "%(subreddit_id)s,%(subreddit)s,%(downs)s,%(permalink)s,%(name)s,%(created)s,%(url)s,%(title)s,%(created_utc)s,%(num_comments)s,%(ups)s) "
 
-		query = (self.query1_template % self.table_name) + query_cols + query_values + self.query2_template
-		
+		if self.type == "mysql":
+			query = (self.query1_template % self.table_name) + query_cols + query_values + self.query2_template
+		else:
+			# SQLite uses :blah instead of %(blah)s
+			#	"(?<=%\()[\w^\)]+(?=\)s)" matches the column names
+			# remove the %( and )s
+			query_values = query_values.replace("%(",":").replace(")s","")
+			query = (self.query1_template % self.table_name) + query_cols + query_values	# no self.query3_template
+
+			# SQLite doesn't support boolean
+			# but sql driver will convert
+				# not really a conversion, since a bool in Python is an int
+
 		return [query , story2]

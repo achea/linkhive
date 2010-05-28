@@ -18,7 +18,11 @@
 
 import sys
 import time
-import MySQLdb
+try:
+	import MySQLdb
+	import sqlite3
+except ImportError:
+	pass
 import urllib,urllib2,cookielib
 from BeautifulSoup import BeautifulSoup
 
@@ -35,6 +39,7 @@ class HNUser:
 		self.sleep_time = 5
 		self.debug = False
 
+		self.type = None
 		self.db = None
 		self.table_name = None
 		self.query1_template = "INSERT INTO %s "
@@ -42,9 +47,12 @@ class HNUser:
 		self.query2_template = "(domain,score,link,url,title,author_href,author,comments,id) VALUES(%(domain)s,%(score)s,%(link)s,%(url)s,%(title)s,%(author_href)s,%(author)s,%(comments)s,%(id)s) ON DUPLICATE KEY UPDATE score=VALUES(score), comments=CASE WHEN comments < VALUES(comments) THEN VALUES(comments) ELSE comments END"
 		# update comment count if current count is less than the new one
 		# http://stackoverflow.com/questions/1044874/conditional-on-duplicate-key-update
+		self.query3_template = "(domain,score,link,url,title,author_href,author,comments,id) VALUES(:domain,:score,:link,:url,:title,:author_href,:author,:comments,:id)"
+		# SQLite doesn't support ON DUPLICATE KEY UPDATE
 
 	def __del__(self):
 		if self.db:
+			self.db.commit()
 			self.db.close()
 
 	def login(self):
@@ -71,18 +79,23 @@ class HNUser:
 
 		self.opener.addheaders = [('User-Agent', 'linkhive/0.1')]
 
-	def initdb(self,host='localhost',user=None,passwd=None,db_name='linkhive',table_name="hn_stories"):
+	def initdb(self,type='sqlite', host='localhost',user=None,passwd=None,db_name='linkhive',table_name="hn_stories"):
 		"""Open a connection to the database"""
 
 		self.table_name = table_name
+		self.type = type
 
 		# if successful, store the state
-		self.db = MySQLdb.connect(host=host, user=user, passwd=passwd, db=db_name, sql_mode='STRICT_ALL_TABLES')
+		if type == "mysql":
+			self.db = MySQLdb.connect(host=host, user=user, passwd=passwd, db=db_name, sql_mode='STRICT_ALL_TABLES')
 			# connect returns true even if unsuccessful according to manual?
 			# TODO check if it connected
+		else:
+			self.db = sqlite3.connect(db_name + ".db",timeout=10)
 
 		c = self.db.cursor()		
-		query = "CREATE TABLE IF NOT EXISTS " + table_name + """
+		if type == "mysql":
+			query = "CREATE TABLE IF NOT EXISTS " + table_name + """
 (
 	domain				VARCHAR(70) CHARACTER SET utf8,
 	score				INT(11) NOT NULL,
@@ -96,7 +109,25 @@ class HNUser:
 	PRIMARY KEY		(id)
 );
 """
+		else:
+			# make sure id is not INTEGER PRIMARY KEY
+			query = "CREATE TABLE IF NOT EXISTS " + table_name + """
+(
+	domain				VARCHAR(70),
+	score				INT(11) NOT NULL,
+	link				VARCHAR(2000),
+	url					VARCHAR(21),
+	title				VARCHAR(300),
+	author_href			VARCHAR(31),
+	author				VARCHAR(21),
+	comments			UNSIGNED INT(11) NOT NULL,
+	id					UNSIGNED INT(11) NOT NULL,
+	PRIMARY KEY		(id)
+);
+"""
+
 		c.execute(query)
+		self.db.commit()
 
 	def cache_stories(self,cache_type):
 		"""Get the saved links to save going back
@@ -173,6 +204,7 @@ class HNUser:
 			#	print "error"
 
 			temp_count = self.__save_links(story_table,count)
+			self.db.commit()
 			page_count += 1
 			story_counts[0] += temp_count[0]
 			story_counts[1] += temp_count[1]
@@ -192,7 +224,8 @@ class HNUser:
 		"""Save links to database.  Returns count of possible 'errors'
 
 		Assume error checking is already done
-		And that there will be no errors here"""
+		And that there will be no errors here
+		Uses self.type to differ"""
 		
 		assert self.table_name is not None
 
@@ -242,24 +275,48 @@ class HNUser:
 					'comments':		num_comments,
 					'url':			stuff3.contents[4]['href'] }
 
-			query_stuff = self.__format_mysql(data)
-			status = c.execute(query_stuff[0], query_stuff[1])
-			if status == 0:
-				story_dupes += 1
-			elif status == 2:
-				story_updates += 1
-			elif status == 1:
-				story_new += 1
+			query_stuff = self.__format_sql(data)
+			if self.type == "mysql":
+				status = c.execute(query_stuff[0], query_stuff[1])
+				if status == 0:
+					story_dupes += 1
+				elif status == 2:
+					story_updates += 1
+				elif status == 1:
+					story_new += 1
+				else:
+					print "how to die?"
 			else:
-				print "how to die?"
+				try:
+					status = c.execute(query_stuff[0],query_stuff[1])
+					# do not have to subtract 1 when exception since code does not reach here
+					story_new += 1
+				except sqlite3.IntegrityError:
+					# check if values differ
+					c.execute("SELECT score,comments FROM " + self.table_name + " WHERE id = :id",query_stuff[1])
+					row = c.fetchone()
+
+					# if old comment count is less than new comment count
+						# new comment count is what we want to save
+					if (row[0] != query_stuff[1]['score'] or row[1] < query_stuff[1]['comments']):
+						story_updates += 1
+						query = "UPDATE " + self.table_name + " SET score=:score, comments=CASE WHEN comments < :comments THEN :comments ELSE comments END WHERE id = :id "
+						status = c.execute(query,query_stuff[1])
+					else:
+						story_dupes += 1
 
 		return (story_new,story_updates,story_dupes)
 
-	def __format_mysql(self,story):
+	def __format_sql(self,story):
 		"""Given a story dictionary, return query"""
 
 		# title and link need quotes escaping
 		#	done in db driver
 
-		query = (self.query1_template % self.table_name) + self.query2_template
+		# TODO what are callbacks?
+		if self.type == "mysql":
+			query = (self.query1_template % self.table_name) + self.query2_template
+		else:
+			query = (self.query1_template % self.table_name) + self.query3_template
+
 		return [query, story]

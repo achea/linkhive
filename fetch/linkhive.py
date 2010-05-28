@@ -73,9 +73,9 @@ def read_args():
 if __name__=="__main__":
 	configFile = "linkhive.cfg"
 	config = ConfigParser.RawConfigParser()
-	reddit_mysql_section = "reddit_mysql"
+	reddit_sql_section = "reddit_sql"
 	reddit_user_section = "reddit_user"			
-	hn_mysql_section = "hn_mysql"
+	hn_sql_section = "hn_sql"
 	hn_user_section = "hn_user"			
 
 	#if len(sys.argv) == 1:
@@ -85,11 +85,12 @@ if __name__=="__main__":
 	# so one table in db for the user, no shared table
 	if (not os.path.isfile(configFile)):		# has to be written by user
 		# create one
-		config.add_section(reddit_mysql_section)
-		config.set(reddit_mysql_section,"db","linkhive")
-		config.set(reddit_mysql_section,"passwd","")
-		config.set(reddit_mysql_section,"user","")
-		config.set(reddit_mysql_section,"host","localhost")
+		config.add_section(reddit_sql_section)
+		config.set(reddit_sql_section,"db","linkhive")
+		config.set(reddit_sql_section,"passwd","")
+		config.set(reddit_sql_section,"user","")
+		config.set(reddit_sql_section,"host","localhost")
+		config.set(reddit_sql_section,"type","")
 
 		config.add_section(reddit_user_section)
 		config.set(reddit_user_section,"passwd","")
@@ -97,11 +98,12 @@ if __name__=="__main__":
 		config.set(reddit_user_section,"key","")
 
 		# hacker news section 
-		config.add_section(hn_mysql_section)
-		config.set(hn_mysql_section,"db","linkhive")
-		config.set(hn_mysql_section,"passwd","")
-		config.set(hn_mysql_section,"user","")
-		config.set(hn_mysql_section,"host","localhost")
+		config.add_section(hn_sql_section)
+		config.set(hn_sql_section,"db","linkhive")
+		config.set(hn_sql_section,"passwd","")
+		config.set(hn_sql_section,"user","")
+		config.set(hn_sql_section,"host","localhost")
+		config.set(hn_sql_section,"type","")
 
 		config.add_section(hn_user_section)
 		config.set(hn_user_section,"passwd","")
@@ -125,16 +127,16 @@ if __name__=="__main__":
 			has_reddit_key = True
 		else:
 			has_reddit_key = False
-		# check that at least have specified user and passwd
-		# allow mysql user with no password
-		if not has_reddit_key and ((not config.has_section(reddit_mysql_section) or not config.has_option(reddit_mysql_section,"user") or config.get(reddit_mysql_section,"user") == "") or (not config.has_section(reddit_user_section) or not config.has_option(reddit_user_section,"user") or config.get(reddit_user_section,"user") == "")):
+		# need db and type, at least
+		if ((not config.has_section(reddit_sql_section) or not config.has_option(reddit_sql_section,"db") or config.get(reddit_sql_section,"db") == "" or not config.has_option(reddit_sql_section,"type") or config.get(reddit_sql_section,"type") == "") or (not config.has_section(reddit_user_section) or not config.has_option(reddit_user_section,"user") or config.get(reddit_user_section,"user") == "")):
 			print "Fill out %s..." % configFile
 			sys.exit(1)
 		# assume here that the config file is filled out (it has already been read)
-		reddit_mysql = { "host" : config.get(reddit_mysql_section,"host"),
-						"user" : config.get(reddit_mysql_section,"user"),
-						"passwd" : config.get(reddit_mysql_section,"passwd"),
-						"db" : config.get(reddit_mysql_section,"db") }
+		reddit_sql = { "host" : config.get(reddit_sql_section,"host"),
+						"user" : config.get(reddit_sql_section,"user"),
+						"passwd" : config.get(reddit_sql_section,"passwd"),
+						"db" : config.get(reddit_sql_section,"db"),
+						"type" : config.get(reddit_sql_section,"type") }
 		reddit_user = { "user" : config.get(reddit_user_section,"user"),
 						"passwd" : config.get(reddit_user_section, "passwd") }
 		if has_reddit_key:
@@ -142,14 +144,15 @@ if __name__=="__main__":
 
 	# same check for hacker news
 	if options.hackernews:
-		if ((not config.has_section(hn_mysql_section) or not config.has_option(hn_mysql_section,"user") or config.get(hn_mysql_section,"user") == "") or (not config.has_section(hn_user_section) or not config.has_option(hn_user_section,"user") or config.get(hn_user_section,"user") == "")):
+		if ((not config.has_section(hn_sql_section) or not config.has_option(hn_sql_section,"db") or config.get(hn_sql_section,"db") == "" or not config.has_section(hn_user_section) or not config.has_option(hn_sql_section,"type") or config.get(hn_sql_section,"type") == "") or (not config.has_section(hn_user_section) or not config.has_option(hn_user_section,"user") or config.get(hn_user_section,"user") == "")):
 			print "Fill out %s..." % configFile
 			sys.exit(1)
 		# not sure if I need to create a dictionary here...
-		hn_mysql = { "host" : config.get(hn_mysql_section,"host"),
-					"user" : config.get(hn_mysql_section,"user"),
-					"passwd" : config.get(hn_mysql_section,"passwd"),
-					"db" : config.get(hn_mysql_section,"db") }
+		hn_sql = { "host" : config.get(hn_sql_section,"host"),
+					"user" : config.get(hn_sql_section,"user"),
+					"passwd" : config.get(hn_sql_section,"passwd"),
+					"db" : config.get(hn_sql_section,"db"),
+					"type" : config.get(hn_sql_section,"type") }
 		hn_user = { "user" : config.get(hn_user_section,"user"),
 					"passwd" : config.get(hn_user_section, "passwd") }
 
@@ -170,7 +173,8 @@ if __name__=="__main__":
 			user1 = lh_reddit.RedditUser(reddit_user["user"],None,reddit_user["key"], quietness = options.quietness)
 		else:
 			user1 = lh_reddit.RedditUser(reddit_user["user"],reddit_user["passwd"], quietness = options.quietness)
-		user1.initdb(reddit_mysql["host"],reddit_mysql["user"],reddit_mysql["passwd"],reddit_mysql["db"])
+		# SQLite requires only type and db, doesn't matter what values the others hold
+		user1.initdb(reddit_sql["type"], reddit_sql["host"],reddit_sql["user"],reddit_sql["passwd"],reddit_sql["db"])
 		user1.login()
 		# options.reddit_page has values liked, saved, etc..
 		# options.reddit_fetch has values update, all, xx
@@ -190,7 +194,7 @@ if __name__=="__main__":
 				hackernews_fetch = options.hackernews_fetch
 
 		user1 = lh_hackernews.HNUser(hn_user["user"],hn_user["passwd"],quietness = options.quietness)
-		user1.initdb(hn_mysql["host"],hn_mysql["user"],hn_mysql["passwd"],hn_mysql["db"])
+		user1.initdb(hn_sql["type"], hn_sql["host"],hn_sql["user"],hn_sql["passwd"],hn_sql["db"])
 		user1.login()
 		user1.cache_stories(hackernews_fetch)
 		del user1

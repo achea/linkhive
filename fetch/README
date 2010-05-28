@@ -1,10 +1,10 @@
 Linkhive v0.1 by Andree Chea
 
-Linkhive is a python program that lets you fetch and save your stories from various social news sites into a local MySQL database.  Currently you can fetch your liked/saved/disliked/hidden stories from reddit ( http://www.reddit.com/ ), and your saved stories from Hacker News ( http://news.ycombinator.com/ ).
+Linkhive is a python program that lets you fetch and save your stories from various social news sites into a MySQL or SQLite database.  Currently you can fetch your liked/saved/disliked/hidden stories from reddit ( http://www.reddit.com/ ), and your saved stories from Hacker News ( http://news.ycombinator.com/ ).
 
 Software requirements
 =====================
-You need at least Python, MySQL 5, and the MySQLdb and BeautifulSoup modules for Python installed.
+You need at least Python 2.5 and the BeautifulSoup module for Python installed.  If you wish to use MySQL, you need at least MySQL 5 and the MySQLdb module.
 
 MySQLdb:  http://www.sourceforge.net/projects/mysql-python
 BeautifulSoup:  http://www.crummy.com/software/BeautifulSoup/
@@ -13,12 +13,12 @@ Linkhive has currently been tested to work with Python 2.6.4/MySQL 5.0.84 with M
 
 Setup
 =====
-Linkhive needs access to a MySQL database.  Create a user and grant at least CREATE, SELECT, INSERT, and UPDATE privileges.  The default database is 'linkhive', though it can be named whatever you want.  Linkhive will create at most two tables in this database.  Here is an example to create a new user and grant it privileges to a MySQL database hosted on the local computer:
+If you are going to use SQLite, skip this paragraph.  For MySQL support, create a user and grant at least CREATE, SELECT, INSERT, and UPDATE privileges.  The default database is 'linkhive', though it can be named whatever you want.  Linkhive will create at most two tables in this database.  Here is an example to create a new user and grant it privileges to a MySQL database hosted on the local computer:
 
     CREATE USER 'mysqlusername'@'localhost' IDENTIFIED BY 'some_pass';
     GRANT CREATE,SELECT,INSERT,UPDATE ON linkhive.* TO 'mysqlusername'@'localhost';
 
-Now run linkhive.py once with no options to generate a linkhive.cfg file and fill in the mysql sections appropriately.  There are two in the event that you wish to save your Hacker News stories in a different database than the reddit one, otherwise they should be identical.
+Now run linkhive.py once with no options to generate a linkhive.cfg file and fill in the sql sections appropriately.  For SQLite, you only need to fill in type = sqlite and db = yourdbname; the others can be left there and ignored.  For MySQL, fill in everything with type = mysql.  There are two in the event that you wish to save your Hacker News stories in a different database than the reddit one, otherwise they should be identical.
 
 For Hacker News authentication, a username and password is required, so be careful of who gets to see linkhive.cfg (or maybe you don't care? :-) ).  For reddit, you can authenticate with either a password or private key, the latter of which I recommend.  You can find your key by going to the reddit private rss feeds page ( http://www.reddit.com/prefs/feeds ) and extracting the alphanumeric string that follows the ?feed= in the URLs (they should all be the same).
 
@@ -33,17 +33,19 @@ key = abcdefghijklmnopqrstuvwxyz01234567890
 passwd = yourpassword
 user = yourhnusername
 
-[hn_mysql]
-passwd = mysqlpassword
-host = localhost
+[hn_sql]
+passwd =
+host =
 db = linkhive
-user = mysqlusername
+user =
+type = sqlite
 
-[reddit_mysql]
-passwd = mysqlpassword
-host = localhost
+[reddit_sql]
+passwd =
+host =
 db = linkhive
-user = mysqlusername
+user =
+type = sqlite
 
 Usage
 =====
@@ -69,7 +71,7 @@ Notes
 
 * If some fields were not present (e.g. reddit's selftext fields), the value is NULL by default.
 
-* I'd love feedback on improvements/criticisms - this is my first Python app in a while and most of it isn't very Pythonic. :-)  Also, I realize the dependency on a full MySQL server/service is kind of clunky - so if anyone has a better way to locally store JSON formatted objects, I'd be interested in knowing it.
+* I'd love feedback on improvements/criticisms - this is my first Python app in a while and most of it isn't very Pythonic. :-)
 
 Todo
 ====
