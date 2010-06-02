@@ -9,6 +9,7 @@
 #include <QSqlDatabase>
 #include <QSqlError>
 #include <QSqlQuery>
+#include <QDir>
 
 #include <QtDebug>
 #include <QSettings>
@@ -275,12 +276,21 @@ bool LhGlobals::createConnections()
 		db = QSqlDatabase::addDatabase(sqlDriver,connName);
 			// if connName is already opened, Qt will close it for us before opening it again
 		//db.setDatabaseName(":memory:");
-		db.setDatabaseName(temp.value("db"));
 		if (temp.value("type") == "mysql")
 		{
 			db.setHostName(temp.value("host"));
 			db.setUserName(temp.value("user"));
 			db.setPassword(temp.value("pass"));
+			db.setDatabaseName(temp.value("db"));
+		}
+		else
+		{
+			// SQLite db is stored in ~/.linkhive/
+			QString path(QDir::home().path());
+			path.append(QDir::separator()).append(".linkhive").append(QDir::separator()).append(temp.value("db")).append(".db");
+			path = QDir::toNativeSeparators(path);
+			qDebug() << path;
+			db.setDatabaseName(path);
 		}
 		if (!db.open())
 		{
