@@ -24,7 +24,7 @@ try:
 except ImportError:
 	pass			# TODO check for MySQLdb loaded
 
-import sys
+import sys,os
 import json
 import time
 from urllib import urlencode
@@ -98,7 +98,7 @@ class RedditUser:
 		#globally add user agent
 		self.opener.addheaders = [('User-Agent', 'linkhive/0.1')]
 	
-	def initdb(self,type='sqlite', host='localhost',user=None,passwd=None,db_name='linkhive',table_name="reddit_stories"):
+	def initdb(self,type='sqlite', host='localhost',user=None,passwd=None,db_name='linkhive',table_name="reddit_stories",config_path=""):
 		"""Open a connection to the database"""
 
 		#reddit_table_name = "reddit_stories"
@@ -111,7 +111,8 @@ class RedditUser:
 			# connect returns true even if unsuccessful according to manual?
 			# TODO check if it connected
 		else:		# sqlite
-			self.db = sqlite3.connect(db_name + ".db",timeout=10)
+			dbPath = config_path + "/" + db_name + ".db"
+			self.db = sqlite3.connect(os.path.normpath(dbPath),timeout=10)
 
 		c = self.db.cursor()		# local cursor?
 		# media_embed_content was upgraded from 500 to 2000 because of one that was ~1600...

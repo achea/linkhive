@@ -16,7 +16,7 @@
 #    You should have received a copy of the GNU General Public License
 #    along with Linkhive.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys
+import sys,os
 import time
 try:
 	import MySQLdb
@@ -79,7 +79,7 @@ class HNUser:
 
 		self.opener.addheaders = [('User-Agent', 'linkhive/0.1')]
 
-	def initdb(self,type='sqlite', host='localhost',user=None,passwd=None,db_name='linkhive',table_name="hn_stories"):
+	def initdb(self,type='sqlite', host='localhost',user=None,passwd=None,db_name='linkhive',table_name="hn_stories", config_path=""):
 		"""Open a connection to the database"""
 
 		self.table_name = table_name
@@ -91,7 +91,8 @@ class HNUser:
 			# connect returns true even if unsuccessful according to manual?
 			# TODO check if it connected
 		else:
-			self.db = sqlite3.connect(db_name + ".db",timeout=10)
+			dbPath = config_path + "/" + db_name + ".db"
+			self.db = sqlite3.connect(os.path.normpath(dbPath),timeout=10)
 
 		c = self.db.cursor()		
 		if type == "mysql":

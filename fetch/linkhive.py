@@ -19,7 +19,7 @@
 import lh_reddit,lh_hackernews
 import ConfigParser
 from optparse import OptionParser
-import os.path, sys, stat
+import os, sys, stat
 
 """ how I would like to use this program
 new reddituser1("username")
@@ -71,10 +71,16 @@ def read_args():
 	return options
 
 if __name__=="__main__":
-	configFile = "linkhive.cfg"
+	configFilePath = os.path.expanduser("~") + "/.linkhive"
+	configFilePath = os.path.normpath(configFilePath)
+	if (not os.path.isdir(configFilePath)):
+		os.mkdir(configFilePath, stat.S_IRWXU)
+	configFile = configFilePath + "/linkhive.cfg"
+	configFile = os.path.normpath(configFile)
+
 	config = ConfigParser.RawConfigParser()
 	reddit_sql_section = "reddit_sql"
-	reddit_user_section = "reddit_user"			
+	reddit_user_section = "reddit_user"	
 	hn_sql_section = "hn_sql"
 	hn_user_section = "hn_user"			
 
@@ -174,7 +180,7 @@ if __name__=="__main__":
 		else:
 			user1 = lh_reddit.RedditUser(reddit_user["user"],reddit_user["passwd"], quietness = options.quietness)
 		# SQLite requires only type and db, doesn't matter what values the others hold
-		user1.initdb(reddit_sql["type"], reddit_sql["host"],reddit_sql["user"],reddit_sql["passwd"],reddit_sql["db"])
+		user1.initdb(reddit_sql["type"], reddit_sql["host"],reddit_sql["user"],reddit_sql["passwd"],reddit_sql["db"],config_path=configFilePath)
 		user1.login()
 		# options.reddit_page has values liked, saved, etc..
 		# options.reddit_fetch has values update, all, xx
@@ -194,7 +200,7 @@ if __name__=="__main__":
 				hackernews_fetch = options.hackernews_fetch
 
 		user1 = lh_hackernews.HNUser(hn_user["user"],hn_user["passwd"],quietness = options.quietness)
-		user1.initdb(hn_sql["type"], hn_sql["host"],hn_sql["user"],hn_sql["passwd"],hn_sql["db"])
+		user1.initdb(hn_sql["type"], hn_sql["host"],hn_sql["user"],hn_sql["passwd"],hn_sql["db"],config_path=configFilePath)
 		user1.login()
 		user1.cache_stories(hackernews_fetch)
 		del user1
