@@ -16,6 +16,7 @@ class ResultView : public QTabWidget
 		/// given QStringList from SearchPanel, update the current tab
 		void updateCurrentTabQuery(QStringList);
 		void addBlankTab();			// not private since accessed by LhMainWindow
+		void addQueryTab(const QStringList &, const char[]);
 		void closeCurrentTab();
 		void selectTab(int);			// -1 for left, 1 for right
 

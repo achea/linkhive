@@ -289,7 +289,6 @@ bool LhGlobals::createConnections()
 			QString path(QDir::home().path());
 			path.append(QDir::separator()).append(".linkhive").append(QDir::separator()).append(temp.value("db")).append(".db");
 			path = QDir::toNativeSeparators(path);
-			qDebug() << path;
 			db.setDatabaseName(path);
 		}
 		if (!db.open())

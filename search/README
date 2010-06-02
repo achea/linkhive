@@ -1,6 +1,6 @@
 Linkhive Search v0.1 by Andree Chea
 
-Linkhive Search is a C++/Qt program to search through tables in MySQL databases.
+Linkhive Search is a C++/Qt program to search through tables in MySQL/SQLite databases.
 
 Software requirements
 =====================
@@ -10,7 +10,7 @@ Setup
 =====
 There currently isn't an install system, so the code needs to be compiled manually.
 
-Run 'qmake' to generate a Makefile from linkhive.pro, then 'make' to build the program with automake, then './linkhive' to run it.  Some debugging is enabled; to disable it, remove the debug keyword from the CONFIG environment variable in linkhive.pro, then run 'qmake' again.  The main case where it'll be a problem is if you type a table name that you haven't configured yet.  Otherwise, it should be fine to leave it in.
+Run 'qmake' to generate a Makefile from linkhive.pro, then 'make' to build the program with make, then './linkhive' to run it.  Some debugging is enabled; to disable it, remove the debug keyword from the CONFIG environment variable in linkhive.pro, then run 'qmake' again.  The main case where it'll be a problem is if you type a table name that you haven't configured yet.  Otherwise, it should be fine to leave it in.
 
 Linkhive Search needs to know the databases available.  Though there is a menu option, you currently can't use it to add new configs; they must be created by hand.  Create a file Linkhive.ini with the following (assuming you used the fetcher's database/table defaults):
 
@@ -20,11 +20,11 @@ hn_stories=0
 
 [configs]
 size=1
-1\host=localhost
-1\user=yourmysqluserhere
-1\pass=yourmysqlpasshere
+1\host=
+1\user=
+1\pass=
 1\db=linkhive
-1\type=mysql
+1\type=sqlite
 
 and save it in one of the following places (case-sensitive):
 
@@ -45,11 +45,11 @@ delicious=1
 
 [configs]
 size=2
-1\host=localhost
-1\user=yourmysqluserhere
-1\pass=yourmysqlpasshere
+1\host=
+1\user=
+1\pass=
 1\db=linkhive
-1\type=mysql
+1\type=sqlite
 2\host=localhost
 2\user=yourdeliciousmysqluserhere
 2\pass=yourdeliciousmysqlpasshere

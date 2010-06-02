@@ -8,6 +8,16 @@
 
 ResultView::ResultView(QWidget *parent) : QTabWidget(parent)
 {
+	// TODO make these configurable
+	QStringList list;
+	list << "DISTINCT subreddit,COUNT(*) AS count" << "reddit_stories" << "1 GROUP BY subreddit ORDER BY count DESC";
+	addQueryTab(list, "Subreddit Count");
+	list.clear();
+	list << "score,num_comments,title,permalink,url" << "reddit_stories" << "1 ORDER BY id DESC";
+	addQueryTab(list, "Reddit Stories");
+	list.clear();
+	list << "score,comments,title,url,link" << "hn_stories" << "1 ORDER BY id DESC";
+	addQueryTab(list, "HN Stories");
 	addBlankTab();
 	connect(this, SIGNAL(currentChanged(int)), this, SLOT(sendCurrentTabQuery(int)));
 }
@@ -25,11 +35,27 @@ void ResultView::addBlankTab()
 
 	// add a list so as to not have it empty
 	QStringList list;
-	list << "COUNT(*)" << "reddit_stories" << "true";
+	list << "COUNT(*)" << "reddit_stories" << "1";
 	tableView->saveQuery(list);
 
 	// TODO proper tab count
 	addTab(tableView,"search 1");
+}
+
+void ResultView::addQueryTab(const QStringList &queryList, const char tabTitle[])
+{
+	QSqlQueryModel *model = new QSqlQueryModel;
+
+	// Construct the query
+	QString query = "SELECT " + queryList.at(0) + " FROM " + queryList.at(1) + " WHERE " + queryList.at(2);
+	model->setQuery(query, QSqlDatabase::database(LhGlobals::Instance().getConnNameFromTableName(queryList.at(1))));
+	LhTableView *tableView = new LhTableView;
+	tableView->setItemDelegate(new RenderLinkDelegate);		// URL matcher
+	tableView->setModel(model);
+	tableView->setEditTriggers(QAbstractItemView::NoEditTriggers);
+	tableView->saveQuery(queryList);
+
+	addTab(tableView, tabTitle);
 }
 
 void ResultView::closeCurrentTab()
