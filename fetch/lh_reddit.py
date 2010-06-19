@@ -151,7 +151,7 @@ class RedditUser:
 	media_oembed_html5				VARCHAR(2000) CHARACTER SET utf8,
 	media_oembed_thumbnail_width	INT(11) UNSIGNED,
 	media_oembed_thumbnail_height	INT(11) UNSIGNED,
-	media_oembed_thumbnail_url		VARCHAR(100) CHARACTER SET utf8,
+	media_oembed_thumbnail_url		VARCHAR(300) CHARACTER SET utf8,
 	downs			INT(11) UNSIGNED NOT NULL,
 	created			FLOAT UNSIGNED NOT NULL,
 	created_utc		FLOAT UNSIGNED NOT NULL,
