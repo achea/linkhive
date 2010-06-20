@@ -148,7 +148,7 @@ class HNUser:
 			print debug_print,
 
 		# the initial page is different from the rest
-		page = self.opener.open("http://news.ycombinator.com/saved?id=" + self.userName).read()
+		page = self.__get_page("http://news.ycombinator.com/saved?id=" + self.userName)
 		soup = BeautifulSoup(page)
 		story_table = soup.contents[0].contents[0].nextSibling.contents[0].contents[0].contents[0].nextSibling.nextSibling.contents[0].contents[0]
 
@@ -192,7 +192,7 @@ class HNUser:
 				sys.stderr.write(debug_print)
 			elif self.quietness < 1:
 				print debug_print,			# , to not print the default newline since we already have one
-			page = self.opener.open("http://news.ycombinator.com" + next_page).read().replace("\r\n",'')
+			page = self.__get_page("http://news.ycombinator.com" + next_page).replace("\r\n",'')
 			soup = BeautifulSoup(page)
 			story_table = soup.contents[0].contents[0].nextSibling.contents[0].contents[0].contents[0].nextSibling.nextSibling.contents[0].contents[0]
 
@@ -220,6 +220,26 @@ class HNUser:
 		if self.quietness < 2:
 			print "Saved " + str(story_counts[0]) + " new stories with " + str(story_counts[1]) + " updated stories and " + str(story_counts[2]) + " duplicate, but not updated stories."
 
+	def __get_page(self, url, tries=5):
+		"""
+		Retries tries times before giving up.
+
+		From reddit-comment-exporter by Peteris Krumins ( http://www.catonmat.net/ )
+		"""
+
+		for i in range(tries):
+			try:
+				if (self.opener is None):
+					text = urllib.urlopen(url).read()
+				else:
+					text = self.opener.open(url).read()	
+
+				return text 
+			except KeyboardInterrupt:
+				return
+			except:
+				print >>sys.stderr, "Failed getting %s, retrying." % url
+				pass
 
 	def __save_links(self,story_table,count):
 		"""Save links to database.  Returns count of possible 'errors'

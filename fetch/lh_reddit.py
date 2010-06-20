@@ -206,7 +206,7 @@ class RedditUser:
 	media_oembed_html5				VARCHAR(2000),
 	media_oembed_thumbnail_width	UNSIGNED INT(11),
 	media_oembed_thumbnail_height	UNSIGNED INT(11),
-	media_oembed_thumbnail_url		VARCHAR(100),
+	media_oembed_thumbnail_url		VARCHAR(300),
 	downs			UNSIGNED INT(11) NOT NULL,
 	created			UNSIGNED FLOAT NOT NULL,
 	created_utc		UNSIGNED FLOAT NOT NULL,
@@ -259,10 +259,7 @@ class RedditUser:
 		elif self.quietness < 1:
 			print debug_print,
 
-		if (self.opener is None):	# if it was as defined by __init__
-			text = urllib.urlopen(composed_sourceurl).read()
-		else:
-			text = self.opener.open(composed_sourceurl).read()		# for login credentials
+		text = self.__get_page(composed_sourceurl)		# fetch page with timeout retries
 		parsed = json.loads(text)
 
 		# there may be multiple listings, like on a comments-page, but we
@@ -290,6 +287,27 @@ class RedditUser:
 			# to blow out your stack, you're probably hurting reddit
 			for link in self.get_links(after_sourceurl, requests+1):
 				yield link
+
+	def __get_page(self, url, tries=5):
+		"""
+		Retries tries times before giving up.
+
+		From reddit-comment-exporter by Peteris Krumins ( http://www.catonmat.net/ )
+		"""
+
+		for i in range(tries):
+			try:
+				if (self.opener is None):	# if it was as defined by __init__
+					text = urllib.urlopen(url).read()
+				else:
+					text = self.opener.open(url).read()		# for login credentials
+
+				return text 
+			except KeyboardInterrupt:
+				return
+			except:
+				print >>sys.stderr, "Failed getting %s, retrying." % url
+				pass
 
 	def cache_stories(self,page_type,cache_type):
 		'''
