@@ -40,7 +40,7 @@ reddituser1.cachestories("liked/disliked/saved",update|1000|max)
 am I to provide a function to fetch but not save?
 reddituser1.getstories"""
 
-def read_args():
+def read_args(user_defaults):
 	usage = "usage: %prog [options]"
 	parser = OptionParser(usage=usage, version="linkhive v0.1 by Andree Chea")
 	#parser.add_option("-h", "--help"
@@ -63,7 +63,8 @@ def read_args():
 				action="store", type="string", dest="reddit_page", default="liked",
 				help="which reddit page to fetch (liked|saved|disliked|hidden) default: liked")
 
-	(options, args) = parser.parse_args()	#parse the argments (default sys.argv[1:])s
+	# use defaults if no options specified on command-line
+	(options, args) = parser.parse_args(user_defaults if len(sys.argv[1:]) == 0 else sys.argv[1:])	#parse the argments (default sys.argv[1:])s
 
 	if len(args) > 0:
 		print "Extra %d option(s) ignored ... " % len(args)
@@ -79,6 +80,7 @@ if __name__=="__main__":
 	configFile = os.path.normpath(configFile)
 
 	config = ConfigParser.RawConfigParser()
+	lh_section = "linkhive"
 	reddit_sql_section = "reddit_sql"
 	reddit_user_section = "reddit_user"	
 	hn_sql_section = "hn_sql"
@@ -91,6 +93,9 @@ if __name__=="__main__":
 	# so one table in db for the user, no shared table
 	if (not os.path.isfile(configFile)):		# has to be written by user
 		# create one
+		config.add_section(lh_section)
+		config.set(lh_section,"defaults","")
+
 		config.add_section(reddit_sql_section)
 		config.set(reddit_sql_section,"db","linkhive")
 		config.set(reddit_sql_section,"passwd","")
@@ -126,7 +131,8 @@ if __name__=="__main__":
 	else:
 		config.read(configFile)
 
-	options = read_args()
+	# read default string and split on spaces (to match how sys.argv splits options)
+	options = read_args(user_defaults = config.get(lh_section,"defaults").split(" ") if config.has_section(lh_section) else [])
 
 	if options.reddit:
 		if config.has_option(reddit_user_section,"key") and config.get(reddit_user_section,"key") != "":

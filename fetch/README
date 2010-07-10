@@ -18,11 +18,14 @@ If you are going to use SQLite, skip this paragraph.  For MySQL support, create 
     CREATE USER 'mysqlusername'@'localhost' IDENTIFIED BY 'some_pass';
     GRANT CREATE,SELECT,INSERT,UPDATE ON linkhive.* TO 'mysqlusername'@'localhost';
 
-Now run linkhive.py once with no options to generate a linkhive.cfg file and fill in the sql sections appropriately.  For SQLite, you only need to fill in type = sqlite and db = yourdbname; the others can be left there and ignored.  For MySQL, fill in everything with type = mysql.  There are two in the event that you wish to save your Hacker News stories in a different database than the reddit one, otherwise they should be identical.
+Now run linkhive.py once with no options to generate a linkhive.cfg file and fill in the sql sections appropriately.  For SQLite, you only need to fill in type = sqlite and db = yourdbname; the others can be left there and ignored.  For MySQL, fill in all the fields and set type = mysql.  There are two in the event that you wish to save your Hacker News stories in a different database than the reddit one, otherwise they should be identical.
 
 For Hacker News authentication, a username and password is required, so be careful of who gets to see linkhive.cfg (or maybe you don't care? :-) ).  For reddit, you can authenticate with either a password or private key, the latter of which I recommend.  You can find your key by going to the reddit private rss feeds page ( http://www.reddit.com/prefs/feeds ) and extracting the alphanumeric string that follows the ?feed= in the URLs (they should all be the same).
 
 When setup is done, the config file might look similar to the following.  If you don't use one of the social news sites, simply leave the fields in the sections blank:
+
+[linkhive]
+defaults = 
 
 [reddit_user]
 passwd = 
@@ -46,6 +49,8 @@ host =
 db = linkhive
 user =
 type = sqlite
+
+You may specify default options so that you don't have to retype them everytime you refetch.  However, if you pass any command line options, they'll override these defaults.
 
 Usage
 =====
