@@ -466,9 +466,12 @@ class RedditUser:
 					story2['media_oembed_description'] = story['media']['oembed']['description']
 				if 'author_name' in story['media']['oembed']:
 					# also assume author_url is provided there too
-					query_cols += "media_oembed_author_name,media_oembed_author_url,"
-					query_values += "%(media_oembed_author_name)s,%(media_oembed_author_url)s,"
+					query_cols += "media_oembed_author_name,"
+					query_values += "%(media_oembed_author_name)s,"
 					story2['media_oembed_author_name'] = story['media']['oembed']['author_name']
+				if 'author_url' in story['media']['oembed']:
+					query_cols += "media_oembed_author_url,"
+					query_values += "%(media_oembed_author_url)s,"
 					story2['media_oembed_author_url'] = story['media']['oembed']['author_url']
 				if 'html5' in story['media']['oembed']:		# TED
 					query_cols += "media_oembed_html5,"
