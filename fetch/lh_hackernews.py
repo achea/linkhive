@@ -64,7 +64,7 @@ class HNUser:
 		login_anchor = soup.contents[0].contents[0].nextSibling.contents[0].contents[0].contents[0].contents[0].contents[0].contents[0].contents[0].nextSibling.nextSibling.contents[0].contents[0]
 
 		time.sleep(2)
-		login_url = hackernews_home[:-1] + login_anchor['href']
+		login_url = hackernews_home + login_anchor['href']
 		page = urllib2.urlopen(login_url)
 		soup = BeautifulSoup(page.read().replace("\r\n",''))
 
