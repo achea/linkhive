@@ -74,7 +74,7 @@ class HNUser:
 		self.opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(self.cj))
 		urllib2.install_opener(self.opener)
 		login_data = urllib.urlencode({'fnid': fnid['value'], 'u': self.userName, 'p': self.passwd})
-		self.opener.open('http://news.ycombinator.com/y', login_data)
+		self.opener.open('https://news.ycombinator.com/y', login_data)
 		time.sleep(1)
 
 		self.opener.addheaders = [('User-Agent', 'linkhive/0.1')]
@@ -148,7 +148,7 @@ class HNUser:
 			print debug_print,
 
 		# the initial page is different from the rest
-		page = self.__get_page("http://news.ycombinator.com/saved?id=" + self.userName)
+		page = self.__get_page("https://news.ycombinator.com/saved?id=" + self.userName)
 		soup = BeautifulSoup(page)
 		story_table = soup.contents[0].contents[0].nextSibling.contents[0].contents[0].contents[0].nextSibling.nextSibling.contents[0].contents[0]
 
