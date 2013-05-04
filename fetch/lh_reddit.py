@@ -107,7 +107,7 @@ class RedditUser:
 
 		# if successful, store the state
 		if type == "mysql":
-			self.db = MySQLdb.connect(host=host, user=user, passwd=passwd, db=db_name, sql_mode='STRICT_ALL_TABLES')
+			self.db = MySQLdb.connect(host=host, user=user, passwd=passwd, db=db_name, sql_mode='STRICT_ALL_TABLES', charset='utf8mb4')
 			# connect returns true even if unsuccessful according to manual?
 			# TODO check if it connected
 		else:		# sqlite
@@ -138,7 +138,7 @@ class RedditUser:
 	media_oembed_provider_url		VARCHAR(200) CHARACTER SET utf8,
 	media_oembed_provider_name		VARCHAR(21) CHARACTER SET utf8,
 	media_oembed_type				VARCHAR(21) CHARACTER SET utf8,
-	media_oembed_description		TEXT CHARACTER SET utf8,
+	media_oembed_description		TEXT CHARACTER SET utf8mb4,
 	media_oembed_title				VARCHAR(400) CHARACTER SET utf8,
 	media_oembed_url				VARCHAR(2000) CHARACTER SET utf8,
 	media_oembed_author_name		VARCHAR(27)	CHARACTER SET utf8,
