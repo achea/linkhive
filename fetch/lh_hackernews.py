@@ -56,28 +56,30 @@ class HNUser:
 			self.db.close()
 
 	def login(self):
+		self.cj = cookielib.CookieJar()
+		self.opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(self.cj))
+		urllib2.install_opener(self.opener)
+
+		# need headers
+		self.opener.addheaders = [('User-Agent', 'linkhive/0.1')]
+
 		# get that blasted fnid... what is it for anyway?
 		hackernews_home = "http://news.ycombinator.com/"
-		page = urllib2.urlopen(hackernews_home)
+		page = self.opener.open(hackernews_home)
 		soup = BeautifulSoup(page.read().replace("\r\n",''))
 
 		login_anchor = soup.contents[0].contents[0].nextSibling.contents[0].contents[0].contents[0].contents[0].contents[0].contents[0].contents[0].nextSibling.nextSibling.contents[0].contents[0]
 
 		time.sleep(2)
 		login_url = hackernews_home + login_anchor['href']
-		page = urllib2.urlopen(login_url)
+		page = self.opener.open(login_url)
 		soup = BeautifulSoup(page.read().replace("\r\n",''))
 
 		fnid = soup.find('form',action='/y').contents[0]
 
-		self.cj = cookielib.CookieJar()
-		self.opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(self.cj))
-		urllib2.install_opener(self.opener)
 		login_data = urllib.urlencode({'fnid': fnid['value'], 'u': self.userName, 'p': self.passwd})
 		self.opener.open('https://news.ycombinator.com/y', login_data)
 		time.sleep(1)
-
-		self.opener.addheaders = [('User-Agent', 'linkhive/0.1')]
 
 	def initdb(self,type='sqlite', host='localhost',user=None,passwd=None,db_name='linkhive',table_name="hn_stories", config_path=""):
 		"""Open a connection to the database"""
