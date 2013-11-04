@@ -66,7 +66,7 @@ class RedditUser:
 		self.table_name = None		# saving to mysql can't be called before initdb
 		# the full query is query1 + valid columns + VALUES(valid columns) + query2
 		self.query1_template = "INSERT INTO %s "
-		self.query2_template = "ON DUPLICATE KEY UPDATE clicked=VALUES(clicked), ups=VALUES(ups), downs=VALUES(downs), likes=VALUES(likes), num_comments=VALUES(num_comments), hidden=VALUES(hidden), score=VALUES(score), saved=VALUES(saved), selftext=VALUES(selftext), selftext_html=VALUES(selftext_html)";
+		self.query2_template = "ON DUPLICATE KEY UPDATE ups=VALUES(ups), downs=VALUES(downs), likes=VALUES(likes), num_comments=VALUES(num_comments), hidden=VALUES(hidden), score=VALUES(score), saved=VALUES(saved), selftext=VALUES(selftext), selftext_html=VALUES(selftext_html)";
 
 	def __del__(self):
 		if self.db:
@@ -122,7 +122,6 @@ class RedditUser:
 (
 	kind					VARCHAR(3) CHARACTER SET utf8,
 	domain					VARCHAR(70) CHARACTER SET utf8,
-	clicked					BOOL,
 	name					VARCHAR(11) CHARACTER SET utf8,
 	ups						INT(11) UNSIGNED NOT NULL,
 	author					VARCHAR(21) CHARACTER SET utf8,
@@ -177,7 +176,6 @@ class RedditUser:
 (
 	kind					VARCHAR(3),
 	domain					VARCHAR(70),
-	clicked					TINYINT(1),
 	name					VARCHAR(11),
 	ups						UNSIGNED INT(11) NOT NULL,
 	author					VARCHAR(21),
@@ -375,12 +373,12 @@ class RedditUser:
 					story_new += 1
 				except sqlite3.IntegrityError:
 					# check if values differ for dupes check
-					c.execute("SELECT clicked,ups,downs,likes,num_comments,hidden,score,saved,selftext,selftext_html FROM " + self.table_name + " WHERE id = :id",query_stuff[1])
+					c.execute("SELECT ups,downs,likes,num_comments,hidden,score,saved,selftext,selftext_html FROM " + self.table_name + " WHERE id = :id",query_stuff[1])
 					row = c.fetchone()			# assume only one 
 
-					if (row[0] != query_stuff[1]['clicked'] or row[1] != query_stuff[1]['ups'] or row[2] != query_stuff[1]['downs'] or row[3] != query_stuff[1]['likes'] or row[4] != query_stuff[1]['num_comments'] or row[5] != query_stuff[1]['hidden'] or row[6] != query_stuff[1]['score'] or row[7] != query_stuff[1]['saved'] or row[8] != query_stuff[1]['selftext'] or row[9] != query_stuff[1]['selftext_html']):
+					if (row[0] != query_stuff[1]['ups'] or row[1] != query_stuff[1]['downs'] or row[2] != query_stuff[1]['likes'] or row[3] != query_stuff[1]['num_comments'] or row[4] != query_stuff[1]['hidden'] or row[5] != query_stuff[1]['score'] or row[6] != query_stuff[1]['saved'] or row[7] != query_stuff[1]['selftext'] or row[8] != query_stuff[1]['selftext_html']):
 						story_updates += 1
-						query = "UPDATE " + self.table_name + " SET clicked=:clicked, ups=:ups, downs=:downs, likes=:likes, num_comments=:num_comments, hidden=:hidden, score=:score, saved=:saved, selftext=:selftext, selftext_html=:selftext_html WHERE id = :id "
+						query = "UPDATE " + self.table_name + " SET ups=:ups, downs=:downs, likes=:likes, num_comments=:num_comments, hidden=:hidden, score=:score, saved=:saved, selftext=:selftext, selftext_html=:selftext_html WHERE id = :id "
 						status = c.execute(query,query_stuff[1])
 					else:
 						story_dupes += 1
@@ -432,8 +430,8 @@ class RedditUser:
 
 			# don't need to copy selftexts from story to story2 because story2 already has them
 
-		query_cols += "is_self,likes,saved,id,clicked,author,"
-		query_values += "%(is_self)s,%(likes)s,%(saved)s,%(id)s,%(clicked)s,%(author)s,"
+		query_cols += "is_self,likes,saved,id,author,"
+		query_values += "%(is_self)s,%(likes)s,%(saved)s,%(id)s,%(author)s,"
 
 		if story['media'] is not None:		# assume it'll give None rather than {}
 			# later add check for {} as well
