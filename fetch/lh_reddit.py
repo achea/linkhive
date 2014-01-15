@@ -436,15 +436,18 @@ class RedditUser:
 		if story['media'] is not None:		# assume it'll give None rather than {}
 			# later add check for {} as well
 			if 'oembed' in story['media']:
-				query_cols +="media_oembed_provider_url,media_oembed_provider_name,media_oembed_type,media_oembed_title,media_oembed_version,media_oembed_html,"
-				query_values +="%(media_oembed_provider_url)s,%(media_oembed_provider_name)s,%(media_oembed_type)s,%(media_oembed_title)s,%(media_oembed_version)s,%(media_oembed_html)s,"
+				query_cols +="media_oembed_provider_url,media_oembed_provider_name,media_oembed_type,media_oembed_version,media_oembed_html,"
+				query_values +="%(media_oembed_provider_url)s,%(media_oembed_provider_name)s,%(media_oembed_type)s,%(media_oembed_version)s,%(media_oembed_html)s,"
 				story2['media_oembed_provider_url'] = story['media']['oembed']['provider_url']
 				story2['media_oembed_provider_name'] = story['media']['oembed']['provider_name']
 				story2['media_oembed_type'] = story['media']['oembed']['type']
-				story2['media_oembed_title'] = story['media']['oembed']['title']
 				story2['media_oembed_version'] = story['media']['oembed']['version']
 				story2['media_oembed_html'] = story['media']['oembed']['html']
 
+				if 'title' in story['media']['oembed']:
+					query_cols += "media_oembed_title,"
+					query_values += "%(media_oembed_title)s,"
+					story2['media_oembed_title'] = story['media']['oembed']['title']
 				if 'url' in story['media']['oembed']:		# blip.tv doesn't have url
 					query_cols += "media_oembed_url,"
 					query_values += "%(media_oembed_url)s,"
