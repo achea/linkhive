@@ -66,7 +66,7 @@ class RedditUser:
 		self.table_name = None		# saving to mysql can't be called before initdb
 		# the full query is query1 + valid columns + VALUES(valid columns) + query2
 		self.query1_template = "INSERT INTO %s "
-		self.query2_template = "ON DUPLICATE KEY UPDATE ups=VALUES(ups), downs=VALUES(downs), likes=VALUES(likes), num_comments=VALUES(num_comments), hidden=VALUES(hidden), score=VALUES(score), saved=VALUES(saved), selftext=VALUES(selftext), selftext_html=VALUES(selftext_html)";
+		self.query2_template = "ON DUPLICATE KEY UPDATE likes=VALUES(likes), num_comments=VALUES(num_comments), hidden=VALUES(hidden), score=VALUES(score), saved=VALUES(saved), selftext=VALUES(selftext), selftext_html=VALUES(selftext_html)";
 
 	def __del__(self):
 		if self.db:
@@ -376,9 +376,9 @@ class RedditUser:
 					c.execute("SELECT ups,downs,likes,num_comments,hidden,score,saved,selftext,selftext_html FROM " + self.table_name + " WHERE id = :id",query_stuff[1])
 					row = c.fetchone()			# assume only one 
 
-					if (row[0] != query_stuff[1]['ups'] or row[1] != query_stuff[1]['downs'] or row[2] != query_stuff[1]['likes'] or row[3] != query_stuff[1]['num_comments'] or row[4] != query_stuff[1]['hidden'] or row[5] != query_stuff[1]['score'] or row[6] != query_stuff[1]['saved'] or row[7] != query_stuff[1]['selftext'] or row[8] != query_stuff[1]['selftext_html']):
+					if (row[2] != query_stuff[1]['likes'] or row[3] != query_stuff[1]['num_comments'] or row[4] != query_stuff[1]['hidden'] or row[5] != query_stuff[1]['score'] or row[6] != query_stuff[1]['saved'] or row[7] != query_stuff[1]['selftext'] or row[8] != query_stuff[1]['selftext_html']):
 						story_updates += 1
-						query = "UPDATE " + self.table_name + " SET ups=:ups, downs=:downs, likes=:likes, num_comments=:num_comments, hidden=:hidden, score=:score, saved=:saved, selftext=:selftext, selftext_html=:selftext_html WHERE id = :id "
+						query = "UPDATE " + self.table_name + " SET likes=:likes, num_comments=:num_comments, hidden=:hidden, score=:score, saved=:saved, selftext=:selftext, selftext_html=:selftext_html WHERE id = :id "
 						status = c.execute(query,query_stuff[1])
 					else:
 						story_dupes += 1
@@ -412,6 +412,10 @@ class RedditUser:
 		# make a copy
 		# that means that story2 might have more than needed; it's ignored
 		story2 = story
+
+		# force 0 due to ups == score, and thus can be negative
+		story2['ups'] = 0
+		story2['downs'] = 0
 
 		query_cols = "(domain,"
 		query_values = "VALUES(%(domain)s,"
