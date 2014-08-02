@@ -194,7 +194,7 @@ class HNUser:
 				sys.stderr.write(debug_print)
 			elif self.quietness < 1:
 				print debug_print,			# , to not print the default newline since we already have one
-			page = self.__get_page("http://news.ycombinator.com" + next_page).replace("\r\n",'')
+			page = self.__get_page("http://news.ycombinator.com" + "/" + next_page).replace("\r\n",'')
 			soup = BeautifulSoup(page)
 			story_table = soup.contents[0].contents[0].nextSibling.contents[0].contents[0].contents[0].nextSibling.nextSibling.contents[0].contents[0]
 
