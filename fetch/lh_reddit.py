@@ -167,7 +167,7 @@ class RedditUser:
 	over_18			BOOL,
 	score			INT(11) NOT NULL,
 	saved			BOOL,
-	thumbnail		VARCHAR(60) CHARACTER SET utf8,
+	thumbnail		VARCHAR(128) CHARACTER SET utf8,
 	PRIMARY KEY		(id)
 );
 """
@@ -221,7 +221,7 @@ class RedditUser:
 	over_18			TINYINT(1),
 	score			INT(11) NOT NULL,
 	saved			TINYINT(1),
-	thumbnail		VARCHAR(60),
+	thumbnail		VARCHAR(128),
 	PRIMARY KEY		(id)
 );
 """
