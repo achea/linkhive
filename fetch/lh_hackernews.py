@@ -24,7 +24,7 @@ try:
 except ImportError:
 	pass
 import urllib,urllib2,cookielib
-from BeautifulSoup import BeautifulSoup
+from bs4 import BeautifulSoup
 
 class HNUser:
 	def __init__(self,userName,passwd,quietness = 0):
@@ -68,7 +68,7 @@ class HNUser:
 		page = self.opener.open(hackernews_home)
 		soup = BeautifulSoup(page.read().replace("\r\n",''))
 
-		login_anchor = soup.contents[0].contents[0].nextSibling.contents[0].contents[0].contents[0].contents[0].contents[0].contents[0].contents[0].nextSibling.nextSibling.contents[0].contents[0]
+		login_anchor = soup.contents[0].contents[0].next_sibling.contents[0].contents[0].contents[0].contents[0].contents[0].contents[0].contents[0].next_sibling.next_sibling.contents[0].contents[0]
 
 		time.sleep(2)
 		login_url = hackernews_home + login_anchor['href']
@@ -152,7 +152,7 @@ class HNUser:
 		# the initial page is different from the rest
 		page = self.__get_page("https://news.ycombinator.com/saved?id=" + self.userName)
 		soup = BeautifulSoup(page)
-		story_table = soup.contents[0].contents[0].nextSibling.contents[0].contents[0].contents[0].nextSibling.nextSibling.contents[0].contents[0]
+		story_table = soup.contents[0].contents[0].next_sibling.contents[0].contents[0].contents[0].next_sibling.next_sibling.contents[0].contents[0]
 
 		#for x in range(len(story_table.contents)):
 		#	print " --- " + str(x) + " ---"
@@ -196,7 +196,7 @@ class HNUser:
 				print debug_print,			# , to not print the default newline since we already have one
 			page = self.__get_page("http://news.ycombinator.com" + "/" + next_page).replace("\r\n",'')
 			soup = BeautifulSoup(page)
-			story_table = soup.contents[0].contents[0].nextSibling.contents[0].contents[0].contents[0].nextSibling.nextSibling.contents[0].contents[0]
+			story_table = soup.contents[0].contents[0].next_sibling.contents[0].contents[0].contents[0].next_sibling.next_sibling.contents[0].contents[0]
 
 			if ((len(story_table)-2) % 3) == 0:
 				count = (len(story_table)-2)/3
