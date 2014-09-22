@@ -75,10 +75,11 @@ class HNUser:
 		page = self.opener.open(login_url)
 		soup = BeautifulSoup(page.read().replace("\r\n",''))
 
-		fnid = soup.find('form',action='/y').contents[0]
+                # assume first form is login and not register
+		whence = soup.find('form',action='login').contents[0]
 
-		login_data = urllib.urlencode({'fnid': fnid['value'], 'u': self.userName, 'p': self.passwd})
-		self.opener.open('https://news.ycombinator.com/y', login_data)
+		login_data = urllib.urlencode({whence['name']: whence['value'], 'acct': self.userName, 'pw': self.passwd})
+		self.opener.open('https://news.ycombinator.com/login', login_data)
 		time.sleep(1)
 
 	def initdb(self,type='sqlite', host='localhost',user=None,passwd=None,db_name='linkhive',table_name="hn_stories", config_path=""):
