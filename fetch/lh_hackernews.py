@@ -290,7 +290,7 @@ class HNUser:
 				num_comments = int(stuff3.contents[4].string.split(" ")[0])
 
 			data = { 'id':			int(stuff3.contents[4]['href'].split('=')[1]),
-					'title':		title_text,
+					'title':		title_text.encode('utf-8'),
 					'link': 		story_link,
 					'domain': 		domain_text,
 					'score': 		int(stuff3.contents[0].string.split(" ")[0]),
