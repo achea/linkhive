@@ -64,7 +64,7 @@ class HNUser:
 		self.opener.addheaders = [('User-Agent', 'linkhive/0.1')]
 
 		# get that blasted fnid... what is it for anyway?
-		hackernews_home = "http://news.ycombinator.com/"
+		hackernews_home = "https://news.ycombinator.com/"
 		page = self.opener.open(hackernews_home)
 		soup = BeautifulSoup(page.read().replace("\r\n",''))
 
@@ -195,7 +195,7 @@ class HNUser:
 				sys.stderr.write(debug_print)
 			elif self.quietness < 1:
 				print debug_print,			# , to not print the default newline since we already have one
-			page = self.__get_page("http://news.ycombinator.com" + "/" + next_page).replace("\r\n",'')
+			page = self.__get_page("https://news.ycombinator.com" + "/" + next_page).replace("\r\n",'')
 			soup = BeautifulSoup(page)
 			story_table = soup.contents[0].contents[0].next_sibling.contents[0].contents[0].contents[0].next_sibling.next_sibling.contents[0].contents[0]
 
