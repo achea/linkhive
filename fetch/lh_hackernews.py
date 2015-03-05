@@ -244,6 +244,52 @@ class HNUser:
 				print >>sys.stderr, "Failed getting %s, retrying." % url
 				pass
 
+	def __extract_story(self, story_table, x):
+		"""Extract a single story indexed by x"""
+
+		# assume that first anchor is the title
+		stuff1 = story_table.contents[0 + x*3].contents[2].find('a')
+
+		# odd case 1 (no link, like a reddit self post)
+		try:
+			stuff2 = story_table.contents[0 + x*3].contents[2].find('span', { "class": "comhead" })
+			domain_text = stuff2.string.strip().lstrip('(').rstrip(')')
+		except AttributeError:				# NoneType (i.e. no span element) has no attribute string
+			# is there a way to add attributes to any object?
+			# like stuff2.string = "self"
+			domain_text = "self"
+
+		# odd case 3 (dead link)
+		#   it messed with stuff2 ordering, so use find to ignore the ordering 
+		#   if dead link, then should be no href on the anchor
+		title_text = stuff1.string
+		try:
+			story_link = stuff1['href']		# 'self' domains still have link, though redundant
+		except KeyError:
+			story_link = "[dead]"
+			# domain_text should be correct, since still is present when dead and used find() to locate it
+
+		stuff3 = story_table.contents[1 + x*3].contents[1]
+
+		# odd case 2 (0 comments)
+		stuff_comments = stuff3.contents[-1].string
+		if stuff_comments == "comments" or stuff_comments == "discuss" or stuff_comments == "":
+			num_comments = 0
+		else:
+			num_comments = int(stuff_comments.split(" ")[0])
+
+		data = { 'id':			int(stuff3.contents[4]['href'].split('=')[1]),
+				'title':		title_text.encode('utf-8'),
+				'link': 		story_link,
+				'domain': 		domain_text,
+				'score': 		int(stuff3.contents[0].string.split(" ")[0]),
+				'author': 		stuff3.contents[2].string,
+				'author_href':	stuff3.contents[2]['href'],
+				'comments':		num_comments,
+				'url':			stuff3.contents[4]['href'] }
+
+		return data
+
 	def __save_links(self,story_table,count):
 		"""Save links to database.  Returns count of possible 'errors'
 
@@ -259,46 +305,7 @@ class HNUser:
 		story_updates = 0
 
 		for x in range(count):
-			# assume that first anchor is the title
-			stuff1 = story_table.contents[0 + x*3].contents[2].find('a')
-
-			# odd case 1 (no link, like a reddit self post)
-			try:
-				stuff2 = story_table.contents[0 + x*3].contents[2].find('span', { "class": "comhead" })
-				domain_text = stuff2.string.strip().lstrip('(').rstrip(')')
-			except AttributeError:				# NoneType (i.e. no span element) has no attribute string
-				# is there a way to add attributes to any object?
-				# like stuff2.string = "self"
-				domain_text = "self"
-				
-			# odd case 3 (dead link)
-			#   it messed with stuff2 ordering, so use find to ignore the ordering 
-			#   if dead link, then should be no href on the anchor
-			title_text = stuff1.string
-			try:
-				story_link = stuff1['href']		# 'self' domains still have link, though redundant
-			except KeyError:
-				story_link = "[dead]"
-				# domain_text should be correct, since still is present when dead and used find() to locate it
-
-			stuff3 = story_table.contents[1 + x*3].contents[1]
-
-			# odd case 2 (0 comments)
-			stuff_comments = stuff3.contents[-1].string
-			if stuff_comments == "comments" or stuff_comments == "discuss" or stuff_comments == "":
-				num_comments = 0
-			else:
-				num_comments = int(stuff_comments.split(" ")[0])
-
-			data = { 'id':			int(stuff3.contents[4]['href'].split('=')[1]),
-					'title':		title_text.encode('utf-8'),
-					'link': 		story_link,
-					'domain': 		domain_text,
-					'score': 		int(stuff3.contents[0].string.split(" ")[0]),
-					'author': 		stuff3.contents[2].string,
-					'author_href':	stuff3.contents[2]['href'],
-					'comments':		num_comments,
-					'url':			stuff3.contents[4]['href'] }
+			data = self.__extract_story(story_table, x)
 
 			query_stuff = self.__format_sql(data)
 			if self.type == "mysql":
